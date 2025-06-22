@@ -1,0 +1,214 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gym Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .btn {
+                @apply text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
+            }
+            .btn-primary {
+                @apply bg-sky-500 hover:bg-sky-600 btn;
+            }
+            .btn-secondary {
+                @apply bg-slate-500 hover:bg-slate-600 btn;
+            }
+            .btn-success {
+                @apply bg-green-500 hover:bg-green-600 btn;
+            }
+            .btn-danger {
+                @apply bg-red-500 hover:bg-red-600 btn;
+            }
+            .input-field {
+                @apply mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400
+                       focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500;
+            }
+            .card {
+                @apply bg-white p-6 rounded-lg shadow-md;
+            }
+            .nav-link {
+                @apply px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900;
+            }
+            .nav-link-active {
+                @apply bg-sky-100 text-sky-600 font-semibold border-b-2 border-sky-500;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-['Inter'] text-slate-800">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-white shadow-md">
+        <div class="max-w-lg mx-auto px-4">
+            <div class="flex items-center justify-around h-16">
+                <a href="#" id="nav-home" class="nav-link nav-link-active">Home</a>
+                <a href="#" id="nav-history" class="nav-link">History</a>
+                <a href="#" id="nav-progress" class="nav-link">Progress</a>
+                <a href="#" id="nav-export" class="nav-link">Export</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-lg mx-auto pt-20 pb-8 px-4">
+
+        <!-- Home View -->
+        <div id="home-view">
+            <header class="mb-8">
+                <h1 class="text-3xl font-bold text-slate-800">Good morning, Wunna!</h1>
+                <p class="text-slate-600">Ready to crush your goals today?</p>
+            </header>
+
+            <div class="mb-8">
+                <button id="start-workout-btn" class="btn-primary w-full text-lg py-3">
+                    + Start Today's Workout
+                </button>
+            </div>
+
+            <div class="card">
+                <h2 class="text-xl font-semibold mb-2">Workouts This Week</h2>
+                <p class="text-3xl font-bold text-sky-500" id="workouts-this-week-count">0</p>
+                <p class="text-sm text-slate-500">Completed in the last 7 days.</p>
+            </div>
+        </div>
+
+        <!-- Active Workout View -->
+        <div id="active-workout-view" class="hidden">
+            <h1 class="text-2xl font-bold mb-4 text-center">Active Workout</h1>
+            <div id="stopwatch-display" class="text-4xl font-mono text-center mb-6 text-sky-600">00:00:00</div>
+
+            <div id="muscle-group-selection-area" class="mb-6">
+                <label for="muscle-group-select" class="block text-sm font-medium text-slate-700 mb-1">1. Select Muscle Group</label>
+                <select id="muscle-group-select" class="input-field w-full">
+                    <option value="">-- Choose a muscle group --</option>
+                </select>
+            </div>
+
+            <div id="exercise-selection-area" class="mb-6 hidden">
+                <label for="exercise-select" class="block text-sm font-medium text-slate-700 mb-1">2. Select Exercise</label>
+                <select id="exercise-select" class="input-field w-full">
+                    <option value="">-- Choose an exercise --</option>
+                </select>
+            </div>
+            
+            <div id="cardio-input-area" class="mb-6 hidden card">
+                <h3 class="text-lg font-semibold mb-3">Log Treadmill Details</h3>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div>
+                        <label for="incline-input" class="block text-sm font-medium text-slate-700">Incline (%)</label>
+                        <input type="number" id="incline-input" class="input-field" placeholder="e.g., 2">
+                    </div>
+                    <div>
+                        <label for="speed-input" class="block text-sm font-medium text-slate-700">Speed</label>
+                        <input type="number" id="speed-input" class="input-field" placeholder="e.g., 6">
+                    </div>
+                    <div>
+                        <label for="cardio-duration-input" class="block text-sm font-medium text-slate-700">Duration (min)</label>
+                        <input type="number" id="cardio-duration-input" class="input-field" placeholder="e.g., 30">
+                    </div>
+                </div>
+                <button id="log-cardio-btn" class="btn-primary mt-4 w-full sm:w-auto">Log Treadmill Session</button>
+            </div>
+
+            <div id="strength-input-area" class="mb-6 hidden card">
+                <h3 class="text-lg font-semibold mb-3" id="current-exercise-log-title">Log Sets for: <span class="font-bold text-sky-600"></span></h3>
+                
+                <div id="logged-sets-display" class="mb-4 space-y-2">
+                    <!-- Logged sets will appear here -->
+                </div>
+
+                <div class="border-t pt-4">
+                    <h4 class="text-md font-semibold mb-2">Add Individual Set</h4>
+                    <div class="grid grid-cols-2 gap-4 mb-2">
+                        <div>
+                            <label for="reps-input" class="block text-xs font-medium text-slate-700">Reps</label>
+                            <input type="number" id="reps-input" class="input-field" placeholder="e.g., 10">
+                        </div>
+                        <div>
+                            <label for="weight-input" class="block text-xs font-medium text-slate-700">Weight (kg/lb)</label>
+                            <input type="number" id="weight-input" class="input-field" placeholder="e.g., 50">
+                        </div>
+                    </div>
+                    <button id="add-set-btn" class="btn-secondary w-full sm:w-auto mb-4 text-sm py-1.5 px-3">+ Add Set</button>
+                </div>
+
+                <div class="border-t pt-4">
+                    <h4 class="text-md font-semibold mb-2">Add Bulk Sets</h4>
+                    <div class="grid grid-cols-3 gap-4 mb-2">
+                        <div>
+                            <label for="bulk-sets-count" class="block text-xs font-medium text-slate-700">Sets</label>
+                            <input type="number" id="bulk-sets-count" class="input-field" placeholder="e.g., 3">
+                        </div>
+                        <div>
+                            <label for="bulk-reps-input" class="block text-xs font-medium text-slate-700">Reps</label>
+                            <input type="number" id="bulk-reps-input" class="input-field" placeholder="e.g., 8">
+                        </div>
+                        <div>
+                            <label for="bulk-weight-input" class="block text-xs font-medium text-slate-700">Weight</label>
+                            <input type="number" id="bulk-weight-input" class="input-field" placeholder="e.g., 45">
+                        </div>
+                    </div>
+                    <button id="add-bulk-sets-btn" class="btn-secondary w-full sm:w-auto text-sm py-1.5 px-3">Add All Sets</button>
+                </div>
+            </div>
+
+            <div id="workout-progression-buttons" class="mt-8 flex flex-col sm:flex-row justify-between gap-4 hidden">
+                <button id="next-exercise-btn" class="btn-primary w-full sm:w-auto order-2 sm:order-1">Next Exercise</button>
+                <button id="finish-workout-btn" class="btn-success w-full sm:w-auto order-1 sm:order-2">Finish Workout</button>
+            </div>
+        </div>
+
+        <!-- History View -->
+        <div id="history-view" class="hidden">
+            <h1 class="text-2xl font-bold mb-6">Workout History</h1>
+            <div id="history-list" class="space-y-4">
+                <!-- History items will be injected here -->
+                <p class="text-slate-500">No workouts recorded yet.</p>
+            </div>
+        </div>
+
+        <!-- Progress View -->
+        <div id="progress-view" class="hidden">
+            <h1 class="text-2xl font-bold mb-6">Strength Progress</h1>
+            <div class="mb-4">
+                <label for="progress-exercise-select" class="block text-sm font-medium text-slate-700 mb-1">Select Exercise:</label>
+                <select id="progress-exercise-select" class="input-field w-full">
+                    <option value="">-- No strength exercises recorded --</option>
+                </select>
+            </div>
+            <div class="card h-80 md:h-96">
+                 <canvas id="progress-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- Export View -->
+        <div id="export-view" class="hidden">
+            <h1 class="text-2xl font-bold mb-6">Export Data</h1>
+            <div class="card">
+                <p class="mb-4 text-slate-600">Download your complete workout history as a CSV file.</p>
+                <button id="export-csv-btn" class="btn-primary mb-6 w-full">Export Workout Data as CSV</button>
+                
+                <hr class="my-6">
+                
+                <h2 class="text-xl font-semibold mb-3">Sync to Google Sheets</h2>
+                <p id="google-auth-status" class="text-sm text-slate-500 mb-3">Initializing...</p>
+                <div class="space-y-3">
+                    <button id="google-authorize-btn" class="btn-secondary w-full">Authorize Google Account</button>
+                    <button id="google-signout-btn" class="btn-secondary w-full hidden">Sign Out Google Account</button>
+                    <button id="sync-google-sheets-btn" class="btn-success w-full" disabled>Sync to Google Sheets</button>
+                </div>
+                <p id="google-sync-status" class="text-sm mt-3"></p>
+            </div>
+        </div>
+    </div>
+<script src="script.js" type="module"></script>
+
+</body>
+</html>
