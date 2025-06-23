@@ -257,7 +257,7 @@
         const addBulkSetsBtn = document.getElementById('add-bulk-sets-btn');
         const logCardioBtn = document.getElementById('log-cardio-btn');
         const historyList = document.getElementById('history-list');
-        const clearHistoryBtn = document.getElementById('clear-history-btn'); // New button
+        const clearHistoryBtn = document.getElementById('clear-history-btn');
         const progressExerciseSelect = document.getElementById('progress-exercise-select');
         const exportCsvBtn = document.getElementById('export-csv-btn');
         const workoutsThisWeekCount = document.getElementById('workouts-this-week-count');
@@ -275,7 +275,6 @@
         const googleSyncStatusEl = document.getElementById('google-sync-status');
 
         // --- Google API Configuration ---
-        // IMPORTANT: Replace with your actual Client ID and Spreadsheet ID IF DIFFERENT
         const GOOGLE_CLIENT_ID = '292165378075-smrkd0eref9irfvhpe7dqfv0f5hqpk70.apps.googleusercontent.com'; 
         const GOOGLE_SPREADSHEET_ID = '1pq_fs1o_q4xWTzX7lBK7_k7cRblkOWRVZjJXH8XbJ-I'; 
         const GOOGLE_SHEET_RANGE = 'Data Input'; 
@@ -285,39 +284,68 @@
         let gapiInited = false;
         let gisInited = false;
 
+        // Ensure this callback is defined before GIS script loads and tries to call it.
+        function tokenResponseCallbackInternal(resp) {
+            console.log("tokenResponseCallback invoked:", resp);
+            if (resp.error) {
+                console.error('Google token error:', resp.error);
+                googleAuthStatusEl.textContent = `Authorization failed: ${resp.error}`;
+                alert(`Authorization failed: ${resp.error}`);
+            } else {
+                console.log('Access token received.');
+                // GIS should automatically set the token for gapi.client if gapi.client is loaded
+                googleAuthStatusEl.textContent = 'Authorization successful!';
+            }
+            updateGAuthButtonStatus();
+        }
+        window.tokenResponseCallback = tokenResponseCallbackInternal;
+
+
         window.gapiLoaded = () => {
-            gapi.load('client', initializeGapiClient);
+            console.log("gapiLoaded function called. Attempting to load 'client' library...");
+            gapi.load('client', initializeGapiClientInternal); 
         };
 
-        async function initializeGapiClient() {
+        async function initializeGapiClientInternal() {
+            console.log("initializeGapiClient function called. Attempting to initialize GAPI client...");
             try {
                 await gapi.client.init({
                     discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
                 });
                 gapiInited = true;
-                console.log("GAPI client initialized.");
-                updateGAuthButtonStatus();
+                console.log("GAPI client initialized SUCCESSFULLY. gapiInited:", gapiInited);
             } catch (e) {
                 console.error("Error initializing GAPI client:", e);
+                gapiInited = false; 
                 googleAuthStatusEl.textContent = 'Error initializing Google API Client. See console.';
             }
+            updateGAuthButtonStatus();
         }
+        // No need to explicitly assign initializeGapiClientInternal to window if only called by gapi.load
 
         window.gisLoaded = () => {
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: GOOGLE_CLIENT_ID,
-                scope: GOOGLE_API_SCOPES,
-                callback: tokenResponseCallback, 
-            });
-            gisInited = true;
-            console.log("GIS client initialized.");
+            console.log("gisLoaded function called. Attempting to initialize GIS client...");
+            try {
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: GOOGLE_CLIENT_ID,
+                    scope: GOOGLE_API_SCOPES,
+                    callback: window.tokenResponseCallback, 
+                });
+                gisInited = true;
+                console.log("GIS client initialized SUCCESSFULLY. gisInited:", gisInited);
+            } catch (e) {
+                console.error("Error initializing GIS client:", e);
+                gisInited = false;
+                googleAuthStatusEl.textContent = 'Error initializing Google Sign-In. See console.';
+            }
             updateGAuthButtonStatus();
         };
 
         function updateGAuthButtonStatus() {
+            console.log(`updateGAuthButtonStatus called: gapiInited=${gapiInited}, gisInited=${gisInited}`);
             if (gapiInited && gisInited) {
-                const token = gapi.client.getToken();
-                if (token) {
+                const token = gapi.client.getToken(); 
+                if (token && token.access_token) { 
                     googleAuthStatusEl.textContent = 'Authorized with Google.';
                     googleAuthorizeBtn.classList.add('hidden');
                     googleSignoutBtn.classList.remove('hidden');
@@ -329,45 +357,42 @@
                     syncGoogleSheetsBtn.disabled = true;
                 }
             } else {
-                 googleAuthStatusEl.textContent = 'Initializing Google services...';
+                 googleAuthStatusEl.textContent = 'Initializing Google services... Please wait.';
             }
         }
         
         function handleGoogleAuth() {
-            // Check if the placeholder IDs are still being used.
-            if (GOOGLE_CLIENT_ID === '292165378075-smrkd0eref9irfvhpe7dqfv0f5hqpk70.apps.googleusercontent.com' || GOOGLE_SPREADSHEET_ID === '1pq_fs1o_q4xWTzX7lBK7_k7cRblkOWRVZjJXH8XbJ-I') {
-                alert("Please replace 'YOUR_GOOGLE_CLIENT_ID' and 'YOUR_SPREADSHEET_ID' in the script with your actual IDs for Google Sheets integration to work.");
+            console.log(`handleGoogleAuth called: gapiInited=${gapiInited}, gisInited=${gisInited}`);
+            // Note: The placeholder check below uses the actual ID string. 
+            // If you have replaced these with your real IDs, this check might trigger if your real ID accidentally matches this string.
+            // It's intended to catch unconfigured placeholder values.
+            if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_PLACEHOLDER' || GOOGLE_SPREADSHEET_ID === 'YOUR_SPREADSHEET_ID_PLACEHOLDER') {
+                alert("It seems you are still using the placeholder GOOGLE_CLIENT_ID or GOOGLE_SPREADSHEET_ID. Please replace these in the script with your actual IDs for Google Sheets integration to work.");
                 googleAuthStatusEl.textContent = 'Configuration needed: Update placeholder IDs in the script.';
                 return;
             }
-            if (gapiInited && gisInited) {
+            if (gapiInited && gisInited && tokenClient) {
                 tokenClient.requestAccessToken({prompt: 'consent'});
             } else {
-                googleAuthStatusEl.textContent = 'Google services not fully loaded yet.';
+                googleAuthStatusEl.textContent = 'Google services not fully loaded yet. Please wait and try again.';
+                console.warn('Attempted Google Auth before GAPI and GIS were fully initialized or tokenClient is missing.');
             }
-        }
-
-        function tokenResponseCallback(resp) {
-            if (resp.error) {
-                console.error('Google token error:', resp.error);
-                googleAuthStatusEl.textContent = `Authorization failed: ${resp.error}`;
-                alert(`Authorization failed: ${resp.error}`);
-            } else {
-                console.log('Access token received.');
-                googleAuthStatusEl.textContent = 'Authorization successful!';
-            }
-            updateGAuthButtonStatus();
         }
 
         function handleGoogleSignout() {
             const token = gapi.client.getToken();
-            if (token !== null) {
+            if (token !== null && token.access_token) {
                 google.accounts.oauth2.revoke(token.access_token, () => {
                     console.log('Access token revoked.');
                     gapi.client.setToken(''); 
                     updateGAuthButtonStatus();
                     googleSyncStatusEl.textContent = 'Signed out.';
                 });
+            } else {
+                console.log("No active token to sign out or already signed out.");
+                gapi.client.setToken(''); 
+                updateGAuthButtonStatus();
+                googleSyncStatusEl.textContent = 'Signed out.';
             }
         }
 
@@ -377,7 +402,7 @@
                 googleSyncStatusEl.className = 'text-sm mt-3 text-orange-600';
                 return;
             }
-             if (!gapi.client.getToken()) {
+             if (!gapi.client.getToken() || !gapi.client.getToken().access_token) {
                 googleSyncStatusEl.textContent = "Please authorize with Google first.";
                 googleSyncStatusEl.className = 'text-sm mt-3 text-red-600';
                 handleGoogleAuth(); 
@@ -424,6 +449,9 @@
             });
 
             try {
+                if (!gapi.client.sheets) {
+                    throw new Error("Google Sheets API client not loaded. Check GAPI initialization.");
+                }
                 const response = await gapi.client.sheets.spreadsheets.values.append({
                     spreadsheetId: GOOGLE_SPREADSHEET_ID,
                     range: GOOGLE_SHEET_RANGE,
@@ -481,8 +509,8 @@
                 workoutHistory = [];
                 saveWorkoutHistory();
                 renderHistoryView();
-                renderHomeView();    // Update home view stats which depend on history
-                renderProgressView(); // Update progress view to clear chart/dropdown
+                renderHomeView();    
+                renderProgressView(); 
                 alert("All workout history has been cleared.");
             }
         }
@@ -588,7 +616,6 @@
                     name: exerciseLibrary[selectedGroup][0], 
                     cardio: null
                 };
-                 // For cardio, progression buttons can show once type is selected.
                 workoutProgressionButtons.classList.remove('hidden');
             } else {
                 exerciseSelectionArea.classList.remove('hidden');
@@ -610,7 +637,7 @@
             if (!selectedExercise || !selectedGroup || selectedGroup === "Treadmill") {
                 strengthInputArea.classList.add('hidden');
                 currentExerciseLog = null;
-                workoutProgressionButtons.classList.add('hidden'); // Hide if no exercise selected
+                workoutProgressionButtons.classList.add('hidden');
                 return;
             }
             
@@ -621,10 +648,8 @@
                 name: selectedExercise,
                 sets: []
             };
-            // For strength, progression buttons should show once an exercise is selected,
-            // even before sets are added, to allow finishing/skipping.
             workoutProgressionButtons.classList.remove('hidden');
-            renderLoggedSets(); // To show "No sets logged yet" message
+            renderLoggedSets(); 
         }
 
         function renderLoggedSets() {
@@ -701,7 +726,6 @@
             }
             currentExerciseLog.cardio = { incline, speed, duration };
             alert(`${currentExerciseLog.name} logged: ${duration} mins, Incline ${incline}%, Speed ${speed}.`);
-            // Progression buttons are already visible for cardio
         }
 
         function finalizeCurrentExercise() {
@@ -710,16 +734,30 @@
                 activeWorkout.exercises.push({...currentExerciseLog}); 
             }
             currentExerciseLog = null; 
-            muscleGroupSelect.value = ''; 
-            handleMuscleGroupChange(); 
+            exerciseSelect.innerHTML = '<option value="">-- Choose an exercise --</option>';
+            exerciseSelectionArea.classList.add('hidden');
+            cardioInputArea.classList.add('hidden');
+            strengthInputArea.classList.add('hidden');
+            workoutProgressionButtons.classList.add('hidden'); 
+            
+            document.getElementById('incline-input').value = '';
+            document.getElementById('speed-input').value = '';
+            document.getElementById('cardio-duration-input').value = '';
+            
+            document.getElementById('reps-input').value = '';
+            document.getElementById('weight-input').value = '';
+            document.getElementById('bulk-sets-count').value = '';
+            document.getElementById('bulk-reps-input').value = '';
+            document.getElementById('bulk-weight-input').value = '';
             loggedSetsDisplay.innerHTML = '';
             currentExerciseLogTitleSpan.textContent = '';
-            resetActiveWorkoutUI(); // Reset entire UI for next exercise or finish
+
+             muscleGroupSelect.value = '';
+             handleMuscleGroupChange(); 
         }
 
         nextExerciseBtn.addEventListener('click', () => {
             finalizeCurrentExercise();
-            // UI reset is handled by finalizeCurrentExercise through resetActiveWorkoutUI
         });
 
         finishWorkoutBtn.addEventListener('click', () => {
@@ -727,8 +765,7 @@
             
             if (activeWorkout.exercises.length === 0) {
                 alert("Please log at least one exercise before finishing the workout.");
-                 // Re-populate muscle group dropdown if they want to add an exercise
-                populateMuscleGroupDropdown();
+                populateMuscleGroupDropdown(); 
                 workoutProgressionButtons.classList.add('hidden');
                 return;
             }
@@ -790,15 +827,18 @@
         function populateProgressExerciseSelect() {
             const uniqueExercises = getUniqueStrengthExercises();
             progressExerciseSelect.innerHTML = '';
+            const ctx = document.getElementById('progress-chart').getContext('2d');
+            if (progressChartInstance) {
+                progressChartInstance.destroy();
+                progressChartInstance = null;
+            }
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
             if (uniqueExercises.length === 0) {
                 progressExerciseSelect.innerHTML = '<option value="">-- No strength exercises recorded --</option>';
-                 if(progressChartInstance) progressChartInstance.destroy(); // Clear chart if no exercises
-                 progressChartInstance = null;
-                 const ctx = document.getElementById('progress-chart').getContext('2d');
-                 ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
                  ctx.textAlign = 'center';
                  ctx.font = "16px 'Inter', sans-serif";
-                 ctx.fillStyle = '#64748b'; // slate-500
+                 ctx.fillStyle = '#64748b'; 
                  ctx.fillText('No strength data to display.', ctx.canvas.width / 2, ctx.canvas.height / 2);
                 return;
             }
@@ -809,7 +849,7 @@
                 progressExerciseSelect.appendChild(option);
             });
             if (uniqueExercises.length > 0) {
-                 progressExerciseSelect.value = uniqueExercises[0]; // Select first by default
+                 progressExerciseSelect.value = uniqueExercises[0]; 
                  updateProgressChart();
             }
         }
@@ -822,13 +862,13 @@
                 progressChartInstance.destroy();
                 progressChartInstance = null;
             }
-            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // Clear canvas before drawing new or message
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); 
 
 
             if (!selectedExercise) {
                 ctx.textAlign = 'center';
                 ctx.font = "16px 'Inter', sans-serif";
-                ctx.fillStyle = '#64748b'; // slate-500
+                ctx.fillStyle = '#64748b'; 
                 ctx.fillText('Select an exercise to view progress.', ctx.canvas.width / 2, ctx.canvas.height / 2);
                 return;
             }
@@ -855,7 +895,7 @@
             if (dataPoints.length === 0) {
                 ctx.textAlign = 'center';
                 ctx.font = "16px 'Inter', sans-serif";
-                ctx.fillStyle = '#64748b'; // slate-500
+                ctx.fillStyle = '#64748b';
                 ctx.fillText(`No data recorded for ${selectedExercise}.`, ctx.canvas.width / 2, ctx.canvas.height / 2);
                 return;
             }
@@ -907,7 +947,6 @@
         
         function renderProgressView() {
             populateProgressExerciseSelect(); 
-            // updateProgressChart is called by populate if exercises exist, or handles empty state.
         }
 
 
@@ -1000,7 +1039,7 @@
         addSetBtn.addEventListener('click', () => addSetToActiveWorkout(false));
         addBulkSetsBtn.addEventListener('click', () => addSetToActiveWorkout(true));
         logCardioBtn.addEventListener('click', logCardioDetails);
-        clearHistoryBtn.addEventListener('click', clearAllWorkoutHistory); // New listener
+        clearHistoryBtn.addEventListener('click', clearAllWorkoutHistory);
         progressExerciseSelect.addEventListener('change', updateProgressChart);
 
 
@@ -1008,6 +1047,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadWorkoutHistory();
             navigateTo('home'); 
+            updateGAuthButtonStatus(); 
         });
     </script>
 </body>
