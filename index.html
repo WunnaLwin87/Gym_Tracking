@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,174 +6,148 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gym Tracker</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
-    <style type="text/tailwindcss">
-        @layer utilities {
-            .btn {
-                @apply text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
-            }
-            .btn-primary {
-                @apply bg-sky-500 hover:bg-sky-600 btn;
-            }
-            .btn-secondary {
-                @apply bg-slate-500 hover:bg-slate-600 btn;
-            }
-            .btn-success {
-                @apply bg-green-500 hover:bg-green-600 btn;
-            }
-            .btn-danger {
-                @apply bg-red-500 hover:bg-red-600 btn;
-            }
-            .input-field {
-                @apply mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400
-                       focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500;
-            }
-            .card {
-                @apply bg-white p-6 rounded-lg shadow-md;
-            }
-            .nav-link {
-                @apply px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900;
-            }
-            .nav-link-active {
-                @apply bg-sky-100 text-sky-600 font-semibold border-b-2 border-sky-500;
-            }
-        }
-    </style>
 </head>
-<body class="bg-slate-50 font-['Inter'] text-slate-800">
+<body>
 
     <!-- Navigation -->
-    <nav class="fixed top-0 left-0 right-0 z-50 bg-white shadow-md">
-        <div class="max-w-lg mx-auto px-4">
-            <div class="flex items-center justify-around h-16">
-                <a href="#" id="nav-home" class="nav-link nav-link-active">Home</a>
-                <a href="#" id="nav-history" class="nav-link">History</a>
-                <a href="#" id="nav-progress" class="nav-link">Progress</a>
-                <a href="#" id="nav-export" class="nav-link">Export</a>
+    <nav class="top-nav">
+        <div class="nav-container">
+            <div class="nav-content">
+                <div class="nav-links-group">
+                    <a href="#" id="nav-home" class="nav-link nav-link-active">Home</a>
+                    <a href="#" id="nav-history" class="nav-link">History</a>
+                    <a href="#" id="nav-progress" class="nav-link">Progress</a>
+                    <a href="#" id="nav-export" class="nav-link">Export</a>
+                </div>
+                <button id="theme-toggle" type="button" class="theme-toggle-btn">
+                    <svg id="theme-toggle-sun" class="icon hidden" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.121-3.536a1 1 0 011.414 0l.707.707a1 1 0 01-1.414 1.414l-.707-.707a1 1 0 010-1.414zM4 10a1 1 0 01-1-1H2a1 1 0 110-2h1a1 1 0 011 1zm-1.536 2.464a1 1 0 010 1.414l.707.707a1 1 0 01-1.414 1.414l-.707-.707a1 1 0 011.414-1.414zM10 18a1 1 0 01-1-1v-1a1 1 0 112 0v1a1 1 0 01-1 1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+                    <svg id="theme-toggle-moon" class="icon hidden" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                    <span class="sr-only">Toggle theme</span>
+                </button>
             </div>
         </div>
     </nav>
 
-    <div class="max-w-lg mx-auto pt-20 pb-8 px-4">
+    <main class="main-container">
 
         <!-- Home View -->
         <div id="home-view">
             <header class="mb-8">
-                <h1 class="text-3xl font-bold text-slate-800">Good morning, Wunna!</h1>
-                <p class="text-slate-600">Ready to crush your goals today?</p>
+                <h1 class="text-3xl font-bold">Good morning, Wunna!</h1>
+                <p class="text-secondary">Ready to crush your goals today?</p>
             </header>
 
             <div class="mb-8">
-                <button id="start-workout-btn" class="btn-primary w-full text-lg py-3">
+                <button id="start-workout-btn" class="btn btn-primary w-full text-lg py-3">
                     + Start Today's Workout
                 </button>
             </div>
 
             <div class="card">
                 <h2 class="text-xl font-semibold mb-2">Workouts This Week</h2>
-                <p class="text-3xl font-bold text-sky-500" id="workouts-this-week-count">0</p>
-                <p class="text-sm text-slate-500">Completed in the last 7 days.</p>
+                <p class="text-3xl font-bold text-accent" id="workouts-this-week-count">0</p>
+                <p class="text-sm text-secondary">Completed in the last 7 days.</p>
             </div>
         </div>
 
         <!-- Active Workout View -->
         <div id="active-workout-view" class="hidden">
             <h1 class="text-2xl font-bold mb-4 text-center">Active Workout</h1>
-            <div id="stopwatch-display" class="text-4xl font-mono text-center mb-6 text-sky-600">00:00:00</div>
+            <div id="stopwatch-display" class="stopwatch-display">00:00:00</div>
 
             <div id="muscle-group-selection-area" class="mb-6">
-                <label for="muscle-group-select" class="block text-sm font-medium text-slate-700 mb-1">1. Select Muscle Group</label>
-                <select id="muscle-group-select" class="input-field w-full">
+                <label for="muscle-group-select" class="form-label">1. Select Muscle Group</label>
+                <select id="muscle-group-select" class="input-field">
                     <option value="">-- Choose a muscle group --</option>
                 </select>
             </div>
 
             <div id="exercise-selection-area" class="mb-6 hidden">
-                <label for="exercise-select" class="block text-sm font-medium text-slate-700 mb-1">2. Select Exercise</label>
-                <select id="exercise-select" class="input-field w-full">
+                <label for="exercise-select" class="form-label">2. Select Exercise</label>
+                <select id="exercise-select" class="input-field">
                     <option value="">-- Choose an exercise --</option>
                 </select>
             </div>
             
             <div id="cardio-input-area" class="mb-6 hidden card">
                 <h3 class="text-lg font-semibold mb-3">Log Treadmill Details</h3>
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                        <label for="incline-input" class="block text-sm font-medium text-slate-700">Incline (%)</label>
+                        <label for="incline-input" class="form-label">Incline (%)</label>
                         <input type="number" id="incline-input" class="input-field" placeholder="e.g., 2">
                     </div>
                     <div>
-                        <label for="speed-input" class="block text-sm font-medium text-slate-700">Speed</label>
+                        <label for="speed-input" class="form-label">Speed</label>
                         <input type="number" id="speed-input" class="input-field" placeholder="e.g., 6">
                     </div>
                     <div>
-                        <label for="cardio-duration-input" class="block text-sm font-medium text-slate-700">Duration (min)</label>
+                        <label for="cardio-duration-input" class="form-label">Duration (min)</label>
                         <input type="number" id="cardio-duration-input" class="input-field" placeholder="e.g., 30">
                     </div>
                 </div>
-                <button id="log-cardio-btn" class="btn-primary mt-4 w-full sm:w-auto">Log Treadmill Session</button>
+                <button id="log-cardio-btn" class="btn btn-primary mt-4 w-full sm:w-auto">Log Treadmill Session</button>
             </div>
 
             <div id="strength-input-area" class="mb-6 hidden card">
-                <h3 class="text-lg font-semibold mb-3" id="current-exercise-log-title">Log Sets for: <span class="font-bold text-sky-600"></span></h3>
+                <h3 class="text-lg font-semibold mb-3" id="current-exercise-log-title">Log Sets for: <span class="font-bold text-accent"></span></h3>
                 
                 <div id="logged-sets-display" class="mb-4 space-y-2">
                     <!-- Logged sets will appear here -->
                 </div>
 
-                <div class="border-t pt-4">
+                <div class="set-input-group">
                     <h4 class="text-md font-semibold mb-2">Add Individual Set</h4>
                     <div class="grid grid-cols-2 gap-4 mb-2">
                         <div>
-                            <label for="reps-input" class="block text-xs font-medium text-slate-700">Reps</label>
+                            <label for="reps-input" class="form-label-xs">Reps</label>
                             <input type="number" id="reps-input" class="input-field" placeholder="e.g., 10">
                         </div>
                         <div>
-                            <label for="weight-input" class="block text-xs font-medium text-slate-700">Weight (kg/lb)</label>
+                            <label for="weight-input" class="form-label-xs">Weight (kg/lb)</label>
                             <input type="number" id="weight-input" class="input-field" placeholder="e.g., 50">
                         </div>
                     </div>
-                    <button id="add-set-btn" class="btn-secondary w-full sm:w-auto mb-4 text-sm py-1.5 px-3">+ Add Set</button>
+                    <button id="add-set-btn" class="btn btn-secondary text-sm py-1-5 px-3 mb-4">+ Add Set</button>
                 </div>
 
-                <div class="border-t pt-4">
+                <div class="set-input-group">
                     <h4 class="text-md font-semibold mb-2">Add Bulk Sets</h4>
                     <div class="grid grid-cols-3 gap-4 mb-2">
                         <div>
-                            <label for="bulk-sets-count" class="block text-xs font-medium text-slate-700">Sets</label>
+                            <label for="bulk-sets-count" class="form-label-xs">Sets</label>
                             <input type="number" id="bulk-sets-count" class="input-field" placeholder="e.g., 3">
                         </div>
                         <div>
-                            <label for="bulk-reps-input" class="block text-xs font-medium text-slate-700">Reps</label>
+                            <label for="bulk-reps-input" class="form-label-xs">Reps</label>
                             <input type="number" id="bulk-reps-input" class="input-field" placeholder="e.g., 8">
                         </div>
                         <div>
-                            <label for="bulk-weight-input" class="block text-xs font-medium text-slate-700">Weight</label>
+                            <label for="bulk-weight-input" class="form-label-xs">Weight</label>
                             <input type="number" id="bulk-weight-input" class="input-field" placeholder="e.g., 45">
                         </div>
                     </div>
-                    <button id="add-bulk-sets-btn" class="btn-secondary w-full sm:w-auto text-sm py-1.5 px-3">Add All Sets</button>
+                    <button id="add-bulk-sets-btn" class="btn btn-secondary text-sm py-1-5 px-3">Add All Sets</button>
                 </div>
             </div>
 
-            <div id="workout-progression-buttons" class="mt-8 flex flex-col sm:flex-row justify-between gap-4 hidden">
-                <button id="next-exercise-btn" class="btn-primary w-full sm:w-auto order-2 sm:order-1">Next Exercise</button>
-                <button id="finish-workout-btn" class="btn-success w-full sm:w-auto order-1 sm:order-2">Finish Workout</button>
+            <div id="workout-progression-buttons" class="mt-8 workout-buttons-container hidden">
+                <button id="next-exercise-btn" class="btn btn-primary w-full sm:w-auto order-2 sm:order-1">Next Exercise</button>
+                <button id="finish-workout-btn" class="btn btn-success w-full sm:w-auto order-1 sm:order-2">Finish Workout</button>
             </div>
         </div>
 
         <!-- History View -->
         <div id="history-view" class="hidden">
-            <div class="flex justify-between items-center mb-6">
+            <div class="view-header">
                 <h1 class="text-2xl font-bold">Workout History</h1>
-                <button id="clear-history-btn" class="btn-danger text-sm py-1.5 px-3">Clear All History</button>
+                <button id="clear-history-btn" class="btn btn-danger text-sm py-1-5 px-3">Clear All History</button>
             </div>
             <div id="history-list" class="space-y-4">
-                <!-- History items will be injected here -->
-                <p class="text-slate-500">No workouts recorded yet.</p>
+                <p class="text-secondary">No workouts recorded yet.</p>
             </div>
         </div>
 
@@ -180,12 +155,12 @@
         <div id="progress-view" class="hidden">
             <h1 class="text-2xl font-bold mb-6">Strength Progress</h1>
             <div class="mb-4">
-                <label for="progress-exercise-select" class="block text-sm font-medium text-slate-700 mb-1">Select Exercise:</label>
-                <select id="progress-exercise-select" class="input-field w-full">
+                <label for="progress-exercise-select" class="form-label">Select Exercise:</label>
+                <select id="progress-exercise-select" class="input-field">
                     <option value="">-- No strength exercises recorded --</option>
                 </select>
             </div>
-            <div class="card h-80 md:h-96">
+            <div class="card chart-container">
                  <canvas id="progress-chart"></canvas>
             </div>
         </div>
@@ -194,861 +169,23 @@
         <div id="export-view" class="hidden">
             <h1 class="text-2xl font-bold mb-6">Export Data</h1>
             <div class="card">
-                <p class="mb-4 text-slate-600">Download your complete workout history as a CSV file.</p>
-                <button id="export-csv-btn" class="btn-primary mb-6 w-full">Export Workout Data as CSV</button>
+                <p class="mb-4 text-secondary">Download your complete workout history as a CSV file.</p>
+                <button id="export-csv-btn" class="btn btn-primary mb-6 w-full">Export Workout Data as CSV</button>
                 
-                <hr class="my-6">
+                <hr class="divider">
                 
                 <h2 class="text-xl font-semibold mb-3">Sync to Google Sheets</h2>
-                <p id="google-auth-status" class="text-sm text-slate-500 mb-3">Initializing...</p>
+                <p id="google-auth-status" class="text-sm text-secondary mb-3">Initializing...</p>
                 <div class="space-y-3">
-                    <button id="google-authorize-btn" class="btn-secondary w-full">Authorize Google Account</button>
-                    <button id="google-signout-btn" class="btn-secondary w-full hidden">Sign Out Google Account</button>
-                    <button id="sync-google-sheets-btn" class="btn-success w-full" disabled>Sync to Google Sheets</button>
+                    <button id="google-authorize-btn" class="btn btn-secondary w-full">Authorize Google Account</button>
+                    <button id="google-signout-btn" class="btn btn-secondary w-full hidden">Sign Out Google Account</button>
+                    <button id="sync-google-sheets-btn" class="btn btn-success w-full" disabled>Sync to Google Sheets</button>
                 </div>
                 <p id="google-sync-status" class="text-sm mt-3"></p>
             </div>
         </div>
-    </div>
+    </main>
 
-    <script type="module">
-        const exerciseLibrary = {
-            "Chest": ["Incline Dumbbell Press", "Incline Machine Press", "Machine Chest Fly", "Cable Flyes", "Flat Bench Press", "Push-ups"],
-            "Shoulders": ["Dumbbell Shoulder Press", "Machine Shoulder Press", "Lateral Raise", "Front Raise", "Reverse Pec Deck", "Upright Row"],
-            "Biceps": ["EZ Bar Curls", "Hammer Curls", "Preacher Curl", "Dumbbell Bicep Curl", "Cable Curl"],
-            "Triceps": ["Dips", "Triceps Rope Pushdown", "Close-Grip Bench Press", "Skullcrushers", "Overhead Dumbbell Extension"],
-            "Back": ["Lat Pull Down", "Seated Cable Row", "Face Pulls", "Barbell Row", "Back Extension", "Deadlifts (conventional)"],
-            "Legs": ["Leg Press", "Squat", "Leg Extension", "Calf Raise", "Hamstring Curl", "Hip Thrusts", "Romanian Deadlifts", "Lunges"],
-            "Abs and Obliques": ["Crunches", "Plank", "Side Bends", "Leg Raises", "Cable Crunch", "Side Plank"],
-            "Treadmill": ["Treadmill Cardio"] // Special key for cardio
-        };
-
-        let workoutHistory = [];
-        let activeWorkout = null;
-        let timerInterval = null;
-        let stopwatchStartTime = null;
-        let currentExerciseLog = null; 
-        let progressChartInstance = null;
-
-        const views = {
-            home: document.getElementById('home-view'),
-            activeWorkout: document.getElementById('active-workout-view'),
-            history: document.getElementById('history-view'),
-            progress: document.getElementById('progress-view'),
-            export: document.getElementById('export-view')
-        };
-        const navLinks = {
-            home: document.getElementById('nav-home'),
-            history: document.getElementById('nav-history'),
-            progress: document.getElementById('nav-progress'),
-            export: document.getElementById('nav-export')
-        };
-
-        const startWorkoutBtn = document.getElementById('start-workout-btn');
-        const stopwatchDisplay = document.getElementById('stopwatch-display');
-        const muscleGroupSelect = document.getElementById('muscle-group-select');
-        const exerciseSelect = document.getElementById('exercise-select');
-        const cardioInputArea = document.getElementById('cardio-input-area');
-        const strengthInputArea = document.getElementById('strength-input-area');
-        const workoutProgressionButtons = document.getElementById('workout-progression-buttons');
-        const nextExerciseBtn = document.getElementById('next-exercise-btn');
-        const finishWorkoutBtn = document.getElementById('finish-workout-btn');
-        const addSetBtn = document.getElementById('add-set-btn');
-        const addBulkSetsBtn = document.getElementById('add-bulk-sets-btn');
-        const logCardioBtn = document.getElementById('log-cardio-btn');
-        const historyList = document.getElementById('history-list');
-        const clearHistoryBtn = document.getElementById('clear-history-btn');
-        const progressExerciseSelect = document.getElementById('progress-exercise-select');
-        const exportCsvBtn = document.getElementById('export-csv-btn');
-        const workoutsThisWeekCount = document.getElementById('workouts-this-week-count');
-        const currentExerciseLogTitleSpan = document.querySelector('#current-exercise-log-title span');
-        const loggedSetsDisplay = document.getElementById('logged-sets-display');
-        
-        const muscleGroupSelectionArea = document.getElementById('muscle-group-selection-area');
-        const exerciseSelectionArea = document.getElementById('exercise-selection-area');
-
-        // --- Google Sheets Sync Elements ---
-        const googleAuthorizeBtn = document.getElementById('google-authorize-btn');
-        const googleSignoutBtn = document.getElementById('google-signout-btn');
-        const syncGoogleSheetsBtn = document.getElementById('sync-google-sheets-btn');
-        const googleAuthStatusEl = document.getElementById('google-auth-status');
-        const googleSyncStatusEl = document.getElementById('google-sync-status');
-
-        // --- Google API Configuration ---
-        const GOOGLE_CLIENT_ID = '292165378075-smrkd0eref9irfvhpe7dqfv0f5hqpk70.apps.googleusercontent.com'; 
-        const GOOGLE_SPREADSHEET_ID = '1pq_fs1o_q4xWTzX7lBK7_k7cRblkOWRVZjJXH8XbJ-I'; 
-        const GOOGLE_SHEET_RANGE = 'Data Input'; 
-        const GOOGLE_API_SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
-
-        let tokenClient;
-        let gapiInited = false;
-        let gisInited = false;
-
-        // Ensure this callback is defined before GIS script loads and tries to call it.
-        function tokenResponseCallbackInternal(resp) {
-            console.log("tokenResponseCallback invoked:", resp);
-            if (resp.error) {
-                console.error('Google token error:', resp.error);
-                googleAuthStatusEl.textContent = `Authorization failed: ${resp.error}`;
-                alert(`Authorization failed: ${resp.error}`);
-            } else {
-                console.log('Access token received.');
-                // GIS should automatically set the token for gapi.client if gapi.client is loaded
-                googleAuthStatusEl.textContent = 'Authorization successful!';
-            }
-            updateGAuthButtonStatus();
-        }
-        window.tokenResponseCallback = tokenResponseCallbackInternal;
-
-
-        window.gapiLoaded = () => {
-            console.log("gapiLoaded function called. Attempting to load 'client' library...");
-            gapi.load('client', initializeGapiClientInternal); 
-        };
-
-        async function initializeGapiClientInternal() {
-            console.log("initializeGapiClient function called. Attempting to initialize GAPI client...");
-            try {
-                await gapi.client.init({
-                    discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
-                });
-                gapiInited = true;
-                console.log("GAPI client initialized SUCCESSFULLY. gapiInited:", gapiInited);
-            } catch (e) {
-                console.error("Error initializing GAPI client:", e);
-                gapiInited = false; 
-                googleAuthStatusEl.textContent = 'Error initializing Google API Client. See console.';
-            }
-            updateGAuthButtonStatus();
-        }
-        // No need to explicitly assign initializeGapiClientInternal to window if only called by gapi.load
-
-        window.gisLoaded = () => {
-            console.log("gisLoaded function called. Attempting to initialize GIS client...");
-            try {
-                tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: GOOGLE_CLIENT_ID,
-                    scope: GOOGLE_API_SCOPES,
-                    callback: window.tokenResponseCallback, 
-                });
-                gisInited = true;
-                console.log("GIS client initialized SUCCESSFULLY. gisInited:", gisInited);
-            } catch (e) {
-                console.error("Error initializing GIS client:", e);
-                gisInited = false;
-                googleAuthStatusEl.textContent = 'Error initializing Google Sign-In. See console.';
-            }
-            updateGAuthButtonStatus();
-        };
-
-        function updateGAuthButtonStatus() {
-            console.log(`updateGAuthButtonStatus called: gapiInited=${gapiInited}, gisInited=${gisInited}`);
-            if (gapiInited && gisInited) {
-                const token = gapi.client.getToken(); 
-                if (token && token.access_token) { 
-                    googleAuthStatusEl.textContent = 'Authorized with Google.';
-                    googleAuthorizeBtn.classList.add('hidden');
-                    googleSignoutBtn.classList.remove('hidden');
-                    syncGoogleSheetsBtn.disabled = false;
-                } else {
-                    googleAuthStatusEl.textContent = 'Not authorized. Click below to authorize.';
-                    googleAuthorizeBtn.classList.remove('hidden');
-                    googleSignoutBtn.classList.add('hidden');
-                    syncGoogleSheetsBtn.disabled = true;
-                }
-            } else {
-                 googleAuthStatusEl.textContent = 'Initializing Google services... Please wait.';
-            }
-        }
-        
-        function handleGoogleAuth() {
-            console.log(`handleGoogleAuth called: gapiInited=${gapiInited}, gisInited=${gisInited}`);
-            // Note: The placeholder check below uses the actual ID string. 
-            // If you have replaced these with your real IDs, this check might trigger if your real ID accidentally matches this string.
-            // It's intended to catch unconfigured placeholder values.
-            if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_PLACEHOLDER' || GOOGLE_SPREADSHEET_ID === 'YOUR_SPREADSHEET_ID_PLACEHOLDER') {
-                alert("It seems you are still using the placeholder GOOGLE_CLIENT_ID or GOOGLE_SPREADSHEET_ID. Please replace these in the script with your actual IDs for Google Sheets integration to work.");
-                googleAuthStatusEl.textContent = 'Configuration needed: Update placeholder IDs in the script.';
-                return;
-            }
-            if (gapiInited && gisInited && tokenClient) {
-                tokenClient.requestAccessToken({prompt: 'consent'});
-            } else {
-                googleAuthStatusEl.textContent = 'Google services not fully loaded yet. Please wait and try again.';
-                console.warn('Attempted Google Auth before GAPI and GIS were fully initialized or tokenClient is missing.');
-            }
-        }
-
-        function handleGoogleSignout() {
-            const token = gapi.client.getToken();
-            if (token !== null && token.access_token) {
-                google.accounts.oauth2.revoke(token.access_token, () => {
-                    console.log('Access token revoked.');
-                    gapi.client.setToken(''); 
-                    updateGAuthButtonStatus();
-                    googleSyncStatusEl.textContent = 'Signed out.';
-                });
-            } else {
-                console.log("No active token to sign out or already signed out.");
-                gapi.client.setToken(''); 
-                updateGAuthButtonStatus();
-                googleSyncStatusEl.textContent = 'Signed out.';
-            }
-        }
-
-        async function syncToGoogleSheets() {
-            if (workoutHistory.length === 0) {
-                googleSyncStatusEl.textContent = "No workout data to sync.";
-                googleSyncStatusEl.className = 'text-sm mt-3 text-orange-600';
-                return;
-            }
-             if (!gapi.client.getToken() || !gapi.client.getToken().access_token) {
-                googleSyncStatusEl.textContent = "Please authorize with Google first.";
-                googleSyncStatusEl.className = 'text-sm mt-3 text-red-600';
-                handleGoogleAuth(); 
-                return;
-            }
-
-            googleSyncStatusEl.textContent = "Syncing data to Google Sheets...";
-            googleSyncStatusEl.className = 'text-sm mt-3 text-sky-600';
-            syncGoogleSheetsBtn.disabled = true;
-
-            const valuesToAppend = [];
-            workoutHistory.forEach(workout => {
-                workout.exercises.forEach(ex => {
-                    if (ex.sets && ex.sets.length > 0) { 
-                        ex.sets.forEach((set, index) => {
-                            valuesToAppend.push([
-                                workout.date,
-                                workout.duration,
-                                ex.muscleGroup,
-                                ex.name,
-                                index + 1, 
-                                set.reps,
-                                set.weight,
-                                "", 
-                                "", 
-                                ""  
-                            ]);
-                        });
-                    } else if (ex.cardio) { 
-                        valuesToAppend.push([
-                            workout.date,
-                            workout.duration,
-                            ex.muscleGroup,
-                            ex.name,
-                            "", 
-                            "", 
-                            "", 
-                            ex.cardio.incline,
-                            ex.cardio.speed,
-                            ex.cardio.duration
-                        ]);
-                    }
-                });
-            });
-
-            try {
-                if (!gapi.client.sheets) {
-                    throw new Error("Google Sheets API client not loaded. Check GAPI initialization.");
-                }
-                const response = await gapi.client.sheets.spreadsheets.values.append({
-                    spreadsheetId: GOOGLE_SPREADSHEET_ID,
-                    range: GOOGLE_SHEET_RANGE,
-                    valueInputOption: 'USER_ENTERED', 
-                    insertDataOption: 'INSERT_ROWS', 
-                    resource: {
-                        values: valuesToAppend,
-                    },
-                });
-                console.log('Google Sheets API response:', response);
-                googleSyncStatusEl.textContent = `Successfully synced ${valuesToAppend.length} rows to Google Sheets.`;
-                googleSyncStatusEl.className = 'text-sm mt-3 text-green-600';
-            } catch (err) {
-                console.error('Error syncing to Google Sheets:', err);
-                googleSyncStatusEl.textContent = `Error syncing: ${err.result?.error?.message || err.message}. See console.`;
-                googleSyncStatusEl.className = 'text-sm mt-3 text-red-600';
-            } finally {
-                syncGoogleSheetsBtn.disabled = false;
-                updateGAuthButtonStatus(); 
-            }
-        }
-
-
-        // --- Navigation ---
-        function navigateTo(viewId) {
-            Object.values(views).forEach(view => view.classList.add('hidden'));
-            views[viewId].classList.remove('hidden');
-
-            Object.values(navLinks).forEach(link => link.classList.remove('nav-link-active'));
-            if (navLinks[viewId]) navLinks[viewId].classList.add('nav-link-active');
-
-            if (viewId === 'home') renderHomeView();
-            if (viewId === 'history') renderHistoryView();
-            if (viewId === 'progress') renderProgressView();
-            if (viewId === 'export') {
-                updateGAuthButtonStatus(); 
-                googleSyncStatusEl.textContent = ''; 
-            }
-        }
-
-        // --- Data Persistence ---
-        function loadWorkoutHistory() {
-            const storedHistory = localStorage.getItem('gymTrackerHistory');
-            if (storedHistory) {
-                workoutHistory = JSON.parse(storedHistory);
-            }
-        }
-
-        function saveWorkoutHistory() {
-            localStorage.setItem('gymTrackerHistory', JSON.stringify(workoutHistory));
-        }
-
-        function clearAllWorkoutHistory() {
-            if (confirm("Are you sure you want to delete all workout history? This action cannot be undone.")) {
-                workoutHistory = [];
-                saveWorkoutHistory();
-                renderHistoryView();
-                renderHomeView();    
-                renderProgressView(); 
-                alert("All workout history has been cleared.");
-            }
-        }
-
-        // --- Home View ---
-        function renderHomeView() {
-            const oneWeekAgo = new Date();
-            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-            const workoutsLastWeek = workoutHistory.filter(workout => new Date(workout.date) >= oneWeekAgo);
-            workoutsThisWeekCount.textContent = workoutsLastWeek.length;
-        }
-
-        // --- Stopwatch ---
-        function formatTime(ms) {
-            const totalSeconds = Math.floor(ms / 1000);
-            const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-            const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-            const seconds = String(totalSeconds % 60).padStart(2, '0');
-            return `${hours}:${minutes}:${seconds}`;
-        }
-
-        function startStopwatch() {
-            stopwatchStartTime = Date.now();
-            stopwatchDisplay.textContent = formatTime(0);
-            timerInterval = setInterval(() => {
-                const elapsedTime = Date.now() - stopwatchStartTime;
-                stopwatchDisplay.textContent = formatTime(elapsedTime);
-            }, 1000);
-        }
-
-        function stopStopwatch() {
-            clearInterval(timerInterval);
-            timerInterval = null;
-            const elapsedTime = Date.now() - stopwatchStartTime;
-            return formatTime(elapsedTime);
-        }
-        
-        // --- Active Workout ---
-        function resetActiveWorkoutUI() {
-            muscleGroupSelect.value = '';
-            exerciseSelect.innerHTML = '<option value="">-- Choose an exercise --</option>';
-            exerciseSelectionArea.classList.add('hidden');
-            cardioInputArea.classList.add('hidden');
-            strengthInputArea.classList.add('hidden');
-            workoutProgressionButtons.classList.add('hidden');
-            
-            document.getElementById('incline-input').value = '';
-            document.getElementById('speed-input').value = '';
-            document.getElementById('cardio-duration-input').value = '';
-            
-            document.getElementById('reps-input').value = '';
-            document.getElementById('weight-input').value = '';
-            document.getElementById('bulk-sets-count').value = '';
-            document.getElementById('bulk-reps-input').value = '';
-            document.getElementById('bulk-weight-input').value = '';
-            loggedSetsDisplay.innerHTML = '';
-            currentExerciseLogTitleSpan.textContent = '';
-        }
-
-        function initializeActiveWorkoutView() {
-            activeWorkout = {
-                id: Date.now(),
-                date: new Date().toISOString().split('T')[0],
-                startTime: Date.now(),
-                duration: null,
-                exercises: []
-            };
-            currentExerciseLog = null;
-            
-            resetActiveWorkoutUI();
-            populateMuscleGroupDropdown();
-            startStopwatch();
-            navigateTo('activeWorkout');
-        }
-        
-        function populateMuscleGroupDropdown() {
-            muscleGroupSelect.innerHTML = '<option value="">-- Choose a muscle group --</option>'; 
-            Object.keys(exerciseLibrary).forEach(group => {
-                const option = document.createElement('option');
-                option.value = group;
-                option.textContent = group;
-                muscleGroupSelect.appendChild(option);
-            });
-        }
-
-        function handleMuscleGroupChange() {
-            const selectedGroup = muscleGroupSelect.value;
-            exerciseSelect.innerHTML = '<option value="">-- Choose an exercise --</option>';
-            strengthInputArea.classList.add('hidden');
-            cardioInputArea.classList.add('hidden');
-            exerciseSelectionArea.classList.add('hidden');
-            workoutProgressionButtons.classList.add('hidden'); 
-            loggedSetsDisplay.innerHTML = ''; 
-            currentExerciseLog = null;
-
-
-            if (!selectedGroup) return;
-
-            if (selectedGroup === "Treadmill") {
-                cardioInputArea.classList.remove('hidden');
-                currentExerciseLog = {
-                    muscleGroup: selectedGroup,
-                    name: exerciseLibrary[selectedGroup][0], 
-                    cardio: null
-                };
-                workoutProgressionButtons.classList.remove('hidden');
-            } else {
-                exerciseSelectionArea.classList.remove('hidden');
-                const exercises = exerciseLibrary[selectedGroup];
-                exercises.forEach(ex => {
-                    const option = document.createElement('option');
-                    option.value = ex;
-                    option.textContent = ex;
-                    exerciseSelect.appendChild(option);
-                });
-            }
-        }
-        
-        function handleExerciseSelectChange() {
-            const selectedExercise = exerciseSelect.value;
-            const selectedGroup = muscleGroupSelect.value;
-            loggedSetsDisplay.innerHTML = ''; 
-
-            if (!selectedExercise || !selectedGroup || selectedGroup === "Treadmill") {
-                strengthInputArea.classList.add('hidden');
-                currentExerciseLog = null;
-                workoutProgressionButtons.classList.add('hidden');
-                return;
-            }
-            
-            strengthInputArea.classList.remove('hidden');
-            currentExerciseLogTitleSpan.textContent = selectedExercise;
-            currentExerciseLog = {
-                muscleGroup: selectedGroup,
-                name: selectedExercise,
-                sets: []
-            };
-            workoutProgressionButtons.classList.remove('hidden');
-            renderLoggedSets(); 
-        }
-
-        function renderLoggedSets() {
-            if (!currentExerciseLog || !currentExerciseLog.sets) return;
-            loggedSetsDisplay.innerHTML = '';
-            if (currentExerciseLog.sets.length === 0) {
-                 loggedSetsDisplay.innerHTML = '<p class="text-sm text-slate-500">No sets logged for this exercise yet.</p>';
-                 return;
-            }
-
-            currentExerciseLog.sets.forEach((set, index) => {
-                const setEl = document.createElement('div');
-                setEl.className = 'text-sm p-2 bg-slate-100 rounded flex justify-between items-center';
-                setEl.innerHTML = `
-                    <span>Set ${index + 1}: ${set.reps} reps @ ${set.weight} ${set.weightUnit || 'kg/lb'}</span>
-                    <button class="text-red-500 hover:text-red-700 text-xs remove-set-btn" data-index="${index}" aria-label="Remove set ${index+1}">Remove</button>
-                `;
-                loggedSetsDisplay.appendChild(setEl);
-            });
-            
-            document.querySelectorAll('.remove-set-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const indexToRemove = parseInt(e.target.dataset.index);
-                    currentExerciseLog.sets.splice(indexToRemove, 1);
-                    renderLoggedSets();
-                });
-            });
-        }
-
-        function addSetToActiveWorkout(isBulk = false) {
-            if (!currentExerciseLog || currentExerciseLog.muscleGroup === "Treadmill") return;
-
-            let setsToAdd = [];
-            if (isBulk) {
-                const setCount = parseInt(document.getElementById('bulk-sets-count').value);
-                const reps = parseInt(document.getElementById('bulk-reps-input').value);
-                const weight = parseFloat(document.getElementById('bulk-weight-input').value);
-                if (isNaN(setCount) || isNaN(reps) || isNaN(weight) || setCount <= 0 || reps <=0 || weight < 0) {
-                    alert('Please enter valid numbers for bulk sets, reps, and weight.');
-                    return;
-                }
-                for (let i = 0; i < setCount; i++) {
-                    setsToAdd.push({ reps, weight });
-                }
-                document.getElementById('bulk-sets-count').value = '';
-                document.getElementById('bulk-reps-input').value = '';
-                document.getElementById('bulk-weight-input').value = '';
-            } else {
-                const reps = parseInt(document.getElementById('reps-input').value);
-                const weight = parseFloat(document.getElementById('weight-input').value);
-                 if (isNaN(reps) || isNaN(weight) || reps <= 0 || weight < 0) {
-                    alert('Please enter valid numbers for reps and weight.');
-                    return;
-                }
-                setsToAdd.push({ reps, weight });
-                document.getElementById('reps-input').value = '';
-                document.getElementById('weight-input').value = '';
-            }
-            
-            currentExerciseLog.sets.push(...setsToAdd);
-            renderLoggedSets();
-        }
-
-        function logCardioDetails() {
-            if (!currentExerciseLog || currentExerciseLog.muscleGroup !== "Treadmill") return;
-
-            const incline = parseFloat(document.getElementById('incline-input').value);
-            const speed = parseFloat(document.getElementById('speed-input').value);
-            const duration = parseInt(document.getElementById('cardio-duration-input').value);
-
-            if ( isNaN(duration) || duration <= 0 || isNaN(incline) || incline <0 || isNaN(speed) || speed <=0) {
-                alert('Please enter valid incline (>=0), speed (>0), and duration (>0).');
-                return;
-            }
-            currentExerciseLog.cardio = { incline, speed, duration };
-            alert(`${currentExerciseLog.name} logged: ${duration} mins, Incline ${incline}%, Speed ${speed}.`);
-        }
-
-        function finalizeCurrentExercise() {
-            if (currentExerciseLog && 
-                ( (currentExerciseLog.sets && currentExerciseLog.sets.length > 0) || currentExerciseLog.cardio) ) {
-                activeWorkout.exercises.push({...currentExerciseLog}); 
-            }
-            currentExerciseLog = null; 
-            exerciseSelect.innerHTML = '<option value="">-- Choose an exercise --</option>';
-            exerciseSelectionArea.classList.add('hidden');
-            cardioInputArea.classList.add('hidden');
-            strengthInputArea.classList.add('hidden');
-            workoutProgressionButtons.classList.add('hidden'); 
-            
-            document.getElementById('incline-input').value = '';
-            document.getElementById('speed-input').value = '';
-            document.getElementById('cardio-duration-input').value = '';
-            
-            document.getElementById('reps-input').value = '';
-            document.getElementById('weight-input').value = '';
-            document.getElementById('bulk-sets-count').value = '';
-            document.getElementById('bulk-reps-input').value = '';
-            document.getElementById('bulk-weight-input').value = '';
-            loggedSetsDisplay.innerHTML = '';
-            currentExerciseLogTitleSpan.textContent = '';
-
-             muscleGroupSelect.value = '';
-             handleMuscleGroupChange(); 
-        }
-
-        nextExerciseBtn.addEventListener('click', () => {
-            finalizeCurrentExercise();
-        });
-
-        finishWorkoutBtn.addEventListener('click', () => {
-            finalizeCurrentExercise(); 
-            
-            if (activeWorkout.exercises.length === 0) {
-                alert("Please log at least one exercise before finishing the workout.");
-                populateMuscleGroupDropdown(); 
-                workoutProgressionButtons.classList.add('hidden');
-                return;
-            }
-
-            activeWorkout.duration = stopStopwatch();
-            workoutHistory.unshift({...activeWorkout}); 
-            saveWorkoutHistory();
-            activeWorkout = null;
-            navigateTo('home');
-        });
-
-
-        // --- History View ---
-        function renderHistoryView() {
-            historyList.innerHTML = ''; 
-            if (workoutHistory.length === 0) {
-                historyList.innerHTML = '<p class="text-slate-500">No workouts recorded yet.</p>';
-                return;
-            }
-
-            workoutHistory.forEach(workout => {
-                const cardEl = document.createElement('div');
-                cardEl.className = 'card';
-                
-                let exercisesSummary = workout.exercises.map(ex => {
-                    let summary = `<strong class="text-sky-600">${ex.name}</strong> (${ex.muscleGroup})`;
-                    if (ex.sets && ex.sets.length > 0) {
-                        summary += `: ${ex.sets.length} set(s)`;
-                    } else if (ex.cardio) {
-                        summary += `: ${ex.cardio.duration} min`;
-                    }
-                    return summary;
-                }).join('<br>');
-
-                cardEl.innerHTML = `
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-lg font-semibold">${new Date(workout.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h3>
-                        <span class="text-sm text-slate-500">${workout.duration}</span>
-                    </div>
-                    <div class="text-sm text-slate-700">${exercisesSummary || 'No exercises logged.'}</div>
-                `;
-                historyList.appendChild(cardEl);
-            });
-        }
-
-        // --- Progress View ---
-        function getUniqueStrengthExercises() {
-            const exercises = new Set();
-            workoutHistory.forEach(workout => {
-                workout.exercises.forEach(ex => {
-                    if (ex.sets && ex.sets.length > 0) { 
-                        exercises.add(ex.name);
-                    }
-                });
-            });
-            return Array.from(exercises).sort();
-        }
-
-        function populateProgressExerciseSelect() {
-            const uniqueExercises = getUniqueStrengthExercises();
-            progressExerciseSelect.innerHTML = '';
-            const ctx = document.getElementById('progress-chart').getContext('2d');
-            if (progressChartInstance) {
-                progressChartInstance.destroy();
-                progressChartInstance = null;
-            }
-            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-            if (uniqueExercises.length === 0) {
-                progressExerciseSelect.innerHTML = '<option value="">-- No strength exercises recorded --</option>';
-                 ctx.textAlign = 'center';
-                 ctx.font = "16px 'Inter', sans-serif";
-                 ctx.fillStyle = '#64748b'; 
-                 ctx.fillText('No strength data to display.', ctx.canvas.width / 2, ctx.canvas.height / 2);
-                return;
-            }
-            uniqueExercises.forEach(exName => {
-                const option = document.createElement('option');
-                option.value = exName;
-                option.textContent = exName;
-                progressExerciseSelect.appendChild(option);
-            });
-            if (uniqueExercises.length > 0) {
-                 progressExerciseSelect.value = uniqueExercises[0]; 
-                 updateProgressChart();
-            }
-        }
-        
-        function updateProgressChart() {
-            const selectedExercise = progressExerciseSelect.value;
-            const ctx = document.getElementById('progress-chart').getContext('2d');
-
-            if (progressChartInstance) {
-                progressChartInstance.destroy();
-                progressChartInstance = null;
-            }
-            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); 
-
-
-            if (!selectedExercise) {
-                ctx.textAlign = 'center';
-                ctx.font = "16px 'Inter', sans-serif";
-                ctx.fillStyle = '#64748b'; 
-                ctx.fillText('Select an exercise to view progress.', ctx.canvas.width / 2, ctx.canvas.height / 2);
-                return;
-            }
-
-            const dataPoints = [];
-            workoutHistory.forEach(workout => {
-                let maxWeightThisSession = 0;
-                workout.exercises.forEach(ex => {
-                    if (ex.name === selectedExercise && ex.sets) {
-                        ex.sets.forEach(set => {
-                            if (set.weight > maxWeightThisSession) {
-                                maxWeightThisSession = set.weight;
-                            }
-                        });
-                    }
-                });
-                if (maxWeightThisSession > 0) {
-                    dataPoints.push({ date: workout.date, maxWeight: maxWeightThisSession });
-                }
-            });
-            
-            dataPoints.sort((a,b) => new Date(a.date) - new Date(b.date));
-
-            if (dataPoints.length === 0) {
-                ctx.textAlign = 'center';
-                ctx.font = "16px 'Inter', sans-serif";
-                ctx.fillStyle = '#64748b';
-                ctx.fillText(`No data recorded for ${selectedExercise}.`, ctx.canvas.width / 2, ctx.canvas.height / 2);
-                return;
-            }
-
-            const labels = dataPoints.map(dp => new Date(dp.date).toLocaleDateString());
-            const data = dataPoints.map(dp => dp.maxWeight);
-
-            progressChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: `Max Weight for ${selectedExercise}`,
-                        data: data,
-                        borderColor: 'rgb(14, 165, 233)', 
-                        backgroundColor: 'rgba(14, 165, 233, 0.1)',
-                        tension: 0.1,
-                        fill: true,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: 'Weight (kg/lb)'}
-                        },
-                        x: {
-                            title: { display: true, text: 'Date'}
-                        }
-                    },
-                    plugins: {
-                        legend: { display: true, position: 'top' },
-                        tooltip: {
-                            callbacks: {
-                                title: function(tooltipItems) {
-                                    return `Date: ${tooltipItems[0].label}`;
-                                },
-                                label: function(tooltipItem) {
-                                    return `Max Weight: ${tooltipItem.formattedValue} kg/lb`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-        
-        function renderProgressView() {
-            populateProgressExerciseSelect(); 
-        }
-
-
-        // --- Export View ---
-        function generateCSV() {
-            if (workoutHistory.length === 0) {
-                alert("No workout data to export.");
-                return null;
-            }
-
-            let csvContent = "Date,Duration,Muscle Group,Exercise,Set Number,Reps,Weight,Incline,Speed,Cardio Duration (min)\n";
-
-            workoutHistory.forEach(workout => {
-                workout.exercises.forEach(ex => {
-                    if (ex.sets && ex.sets.length > 0) { 
-                        ex.sets.forEach((set, index) => {
-                            const row = [
-                                workout.date,
-                                workout.duration,
-                                ex.muscleGroup,
-                                ex.name,
-                                index + 1, 
-                                set.reps,
-                                set.weight,
-                                "", 
-                                "", 
-                                ""  
-                            ].map(val => `"${String(val).replace(/"/g, '""')}"`).join(","); 
-                            csvContent += row + "\n";
-                        });
-                    } else if (ex.cardio) { 
-                        const row = [
-                            workout.date,
-                            workout.duration,
-                            ex.muscleGroup,
-                            ex.name,
-                            "", 
-                            "", 
-                            "", 
-                            ex.cardio.incline,
-                            ex.cardio.speed,
-                            ex.cardio.duration
-                        ].map(val => `"${String(val).replace(/"/g, '""')}"`).join(","); 
-                        csvContent += row + "\n";
-                    }
-                });
-            });
-            return csvContent;
-        }
-
-        function downloadCSV(csvString) {
-            if (!csvString) return;
-            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            if (link.download !== undefined) { 
-                const url = URL.createObjectURL(blob);
-                link.setAttribute("href", url);
-                link.setAttribute("download", "workout_history.csv");
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            }
-        }
-        
-        exportCsvBtn.addEventListener('click', () => {
-            const csvData = generateCSV();
-            if (csvData) {
-                downloadCSV(csvData);
-            }
-        });
-
-        // Event listeners for Google Sync
-        googleAuthorizeBtn.addEventListener('click', handleGoogleAuth);
-        googleSignoutBtn.addEventListener('click', handleGoogleSignout);
-        syncGoogleSheetsBtn.addEventListener('click', syncToGoogleSheets);
-
-
-        // --- Event Listeners ---
-        navLinks.home.addEventListener('click', (e) => { e.preventDefault(); navigateTo('home'); });
-        navLinks.history.addEventListener('click', (e) => { e.preventDefault(); navigateTo('history'); });
-        navLinks.progress.addEventListener('click', (e) => { e.preventDefault(); navigateTo('progress'); });
-        navLinks.export.addEventListener('click', (e) => { e.preventDefault(); navigateTo('export'); });
-
-        startWorkoutBtn.addEventListener('click', initializeActiveWorkoutView);
-        muscleGroupSelect.addEventListener('change', handleMuscleGroupChange);
-        exerciseSelect.addEventListener('change', handleExerciseSelectChange);
-        
-        addSetBtn.addEventListener('click', () => addSetToActiveWorkout(false));
-        addBulkSetsBtn.addEventListener('click', () => addSetToActiveWorkout(true));
-        logCardioBtn.addEventListener('click', logCardioDetails);
-        clearHistoryBtn.addEventListener('click', clearAllWorkoutHistory);
-        progressExerciseSelect.addEventListener('change', updateProgressChart);
-
-
-        // --- Initialization ---
-        document.addEventListener('DOMContentLoaded', () => {
-            loadWorkoutHistory();
-            navigateTo('home'); 
-            updateGAuthButtonStatus(); 
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
