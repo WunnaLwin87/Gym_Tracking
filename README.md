@@ -143,13 +143,13 @@ To enable the Google Sheets synchronization feature, you'll need to set up a Goo
 ---
 
 ## Project Structure
-
+```
 .
 ├── index.html          # Main application structure
 ├── styles.css          # All application styling, including theme variables
 └── script.js           # All application logic (vanilla JavaScript)
 └── README.md           # This file
-
+```
 
 ---
 
