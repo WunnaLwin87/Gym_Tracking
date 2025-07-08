@@ -11,12 +11,12 @@ A simple, vanilla JavaScript-powered single-page application (SPA) for tracking 
 * [Technical Stack & Constraints](#technical-stack--constraints)
 * [Getting Started](#getting-started)
     * [Prerequisites](#prerequisites)
+    * [Live Demo](#live-demo)
     * [Installation](#installation)
     * [Google Sheets API Setup](#google-sheets-api-setup)
 * [Usage](#usage)
 * [Project Structure](#project-structure)
 * [Contributing](#contributing)
-* [License](#license)
 * [Acknowledgments](#acknowledgments)
 
 ---
@@ -80,18 +80,26 @@ To get a local copy up and running, follow these simple steps.
 
 ### Prerequisites
 
-* A modern web browser (e.g., Chrome, Chrome, Edge, Safari).
+* A modern web browser (e.g., Chrome, Firefox, Edge, Safari).
 * (Optional, for Google Sheets sync) A Google Cloud Project with the Google Sheets API enabled and OAuth 2.0 Client ID credentials.
+
+### Live Demo
+
+You can directly access and use the Gym Tracker App via GitHub Pages:
+[https://wunnalwin87.github.io/Gym_Tracking](https://wunnalwin87.github.io/Gym_Tracking)
+
+When using the live demo, please be aware:
+* Your workout data is stored locally in your browser's `localStorage`. This means your data will persist between sessions on that specific browser/device until you clear your browser data or explicitly use the "Clear All History" button within the app.
+* You can utilize the "Export Workout Data as CSV" feature to download your history for analysis or dashboard creation in tools like Excel.
+* The Google Sheets Synchronization feature is available for users who want to back up, share, or customize their data management beyond the browser's local storage.
 
 ### Installation
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/YOUR_USERNAME/gym-tracker-app.git](https://github.com/YOUR_USERNAME/gym-tracker-app.git)
-    cd gym-tracker-app
+    git clone [https://github.com/WunnaLwin87/Gym_Tracking.git]
+    cd gym_tracking
     ```
-    *(Note: Replace `YOUR_USERNAME` with your actual GitHub username if this is a real repo.)*
-
 2.  **Open `index.html`:**
     Simply open the `index.html` file in your web browser. You can do this by navigating to the file in your explorer/finder and double-clicking it, or by running a simple local server if you prefer (e.g., `python -m http.server` in the project directory).
 
@@ -149,19 +157,11 @@ To enable the Google Sheets synchronization feature, you'll need to set up a Goo
 ├── styles.css          # All application styling, including theme variables
 └── script.js           # All application logic (vanilla JavaScript)
 └── README.md           # This file
-```
-
 ---
-
+```
 ## Contributing
 
 As this project focuses on a specific set of constraints (vanilla, no build tools), direct contributions for adding complex features or frameworks are not being sought. However, if you find bugs, have suggestions for improvements within the existing constraints, or spot potential optimizations, please feel free to **open an issue or pull request**!
-
----
-
-## License
-
-Distributed under the MIT License. See `LICENSE` for more information. *(You would typically include a LICENSE file in your repository).*
 
 ---
 
