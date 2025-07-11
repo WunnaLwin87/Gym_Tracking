@@ -1,5 +1,4 @@
 
-// Global variables from external scripts (gapi, google, Chart) are loaded in index.html
 
 const exerciseLibrary = {
     "Chest": ["Incline Dumbbell Press", "Machine Chest Fly", "Incline Machine Press", "Flat Bench Press", "Decline Bench Press", "Dumbbell Flyes", "Push-ups"],
@@ -11,11 +10,13 @@ const exerciseLibrary = {
     "Treadmill": ["Treadmill Cardio"] // Special key for cardio
 };
 
+const HISTORY_KEY = 'gymTrackerHistory';
+const ACTIVE_WORKOUT_KEY = 'gymTrackerActiveWorkout';
+
 let workoutHistory = [];
 let activeWorkout = null;
 let timerInterval = null;
-let stopwatchStartTime = null;
-let currentExerciseLog = null;
+let currentExerciseLog = null; 
 let progressChartInstance = null;
 
 const views = {
@@ -38,7 +39,6 @@ const muscleGroupSelect = document.getElementById('muscle-group-select');
 const exerciseSelect = document.getElementById('exercise-select');
 const cardioInputArea = document.getElementById('cardio-input-area');
 const strengthInputArea = document.getElementById('strength-input-area');
-const exerciseSelectionArea = document.getElementById('exercise-selection-area');
 const workoutProgressionButtons = document.getElementById('workout-progression-buttons');
 const nextExerciseBtn = document.getElementById('next-exercise-btn');
 const finishWorkoutBtn = document.getElementById('finish-workout-btn');
@@ -53,10 +53,9 @@ const workoutsThisWeekCount = document.getElementById('workouts-this-week-count'
 const currentExerciseLogTitleSpan = document.querySelector('#current-exercise-log-title span');
 const loggedSetsDisplay = document.getElementById('logged-sets-display');
 
-// --- Theme Management Elements ---
-const themeToggleBtn = document.getElementById('theme-toggle');
-const sunIcon = document.getElementById('theme-toggle-sun');
-const moonIcon = document.getElementById('theme-toggle-moon');
+const exerciseSelectionArea = document.getElementById('exercise-selection-area');
+const loggedWorkoutSummary = document.getElementById('logged-workout-summary');
+const activeWorkoutSummaryCard = document.getElementById('active-workout-summary-card');
 
 // --- Google Sheets Sync Elements ---
 const googleAuthorizeBtn = document.getElementById('google-authorize-btn');
@@ -75,40 +74,8 @@ let tokenClient;
 let gapiInited = false;
 let gisInited = false;
 
-// Define callback before it's referenced
-const tokenResponseCallback = (resp) => {
-    if (resp.error) {
-        console.error('Google token error:', resp.error);
-        googleAuthStatusEl.textContent = `Authorization failed: ${resp.error}`;
-        alert(`Authorization failed: ${resp.error}`);
-    } else {
-        googleAuthStatusEl.textContent = 'Authorization successful!';
-    }
-    updateGAuthButtonStatus();
-};
-
-// --- Google API Callbacks (must be global) ---
-window.gapiLoaded = () => {
-    gapi.load('client', initializeGapiClient); 
-};
-
-window.gisLoaded = () => {
-    try {
-        tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: GOOGLE_CLIENT_ID,
-            scope: GOOGLE_API_SCOPES,
-            callback: tokenResponseCallback, 
-        });
-        gisInited = true;
-    } catch (e) {
-        console.error("Error initializing GIS client:", e);
-        gisInited = false;
-        googleAuthStatusEl.textContent = 'Error initializing Google Sign-In. See console.';
-    }
-    updateGAuthButtonStatus();
-};
-
-window.tokenResponseCallback = tokenResponseCallback;
+// --- Google API Global Callbacks & Initialization ---
+// These functions must be on the window object to be called by the Google API scripts.
 
 async function initializeGapiClient() {
     try {
@@ -118,41 +85,67 @@ async function initializeGapiClient() {
         gapiInited = true;
     } catch (e) {
         console.error("Error initializing GAPI client:", e);
-        gapiInited = false; 
-        googleAuthStatusEl.textContent = 'Error initializing Google API Client. See console.';
+        if(googleAuthStatusEl) googleAuthStatusEl.textContent = 'Error initializing Google API Client. See console.';
     }
     updateGAuthButtonStatus();
 }
 
-function updateGAuthButtonStatus() {
-    if (gapiInited && gisInited) {
-        const token = gapi.client.getToken(); 
-        if (token && token.access_token) { 
-            googleAuthStatusEl.textContent = 'Authorized with Google.';
-            googleAuthorizeBtn.classList.add('hidden');
-            googleSignoutBtn.classList.remove('hidden');
-            syncGoogleSheetsBtn.disabled = false;
-        } else {
-            googleAuthStatusEl.textContent = 'Not authorized. Click below to authorize.';
-            googleAuthorizeBtn.classList.remove('hidden');
-            googleSignoutBtn.classList.add('hidden');
-            syncGoogleSheetsBtn.disabled = true;
-        }
+window.gapiLoaded = () => {
+    gapi.load('client', initializeGapiClient); 
+};
+
+window.tokenResponseCallback = (resp) => {
+    if (resp.error) {
+        console.error('Google token error:', resp.error);
+        if(googleAuthStatusEl) googleAuthStatusEl.textContent = `Authorization failed: ${resp.error}`;
+        alert(`Authorization failed: ${resp.error}`);
     } else {
-         googleAuthStatusEl.textContent = 'Initializing Google services... Please wait.';
+        console.log('Access token received.');
+        if(googleAuthStatusEl) googleAuthStatusEl.textContent = 'Authorization successful!';
+    }
+    updateGAuthButtonStatus();
+}
+
+window.gisLoaded = () => {
+    try {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: GOOGLE_CLIENT_ID,
+            scope: GOOGLE_API_SCOPES,
+            callback: window.tokenResponseCallback, 
+        });
+        gisInited = true;
+    } catch (e) {
+        console.error("Error initializing GIS client:", e);
+        if(googleAuthStatusEl) googleAuthStatusEl.textContent = 'Error initializing Google Sign-In. See console.';
+    }
+    updateGAuthButtonStatus();
+};
+
+function updateGAuthButtonStatus() {
+    if (!gapiInited || !gisInited) {
+        if(googleAuthStatusEl) googleAuthStatusEl.textContent = 'Initializing Google services... Please wait.';
+        return;
+    }
+    
+    const token = gapi.client.getToken(); 
+    if (token && token.access_token) { 
+        if(googleAuthStatusEl) googleAuthStatusEl.textContent = 'Authorized with Google.';
+        if(googleAuthorizeBtn) googleAuthorizeBtn.classList.add('hidden');
+        if(googleSignoutBtn) googleSignoutBtn.classList.remove('hidden');
+        if(syncGoogleSheetsBtn) syncGoogleSheetsBtn.disabled = false;
+    } else {
+        if(googleAuthStatusEl) googleAuthStatusEl.textContent = 'Not authorized. Click below to authorize.';
+        if(googleAuthorizeBtn) googleAuthorizeBtn.classList.remove('hidden');
+        if(googleSignoutBtn) googleSignoutBtn.classList.add('hidden');
+        if(syncGoogleSheetsBtn) syncGoogleSheetsBtn.disabled = true;
     }
 }
 
 function handleGoogleAuth() {
-    if (GOOGLE_CLIENT_ID.includes('PLACEHOLDER') || GOOGLE_SPREADSHEET_ID.includes('PLACEHOLDER')) {
-        alert("Please replace placeholder Google API credentials in the script to use this feature.");
-        googleAuthStatusEl.textContent = 'Configuration needed: Update placeholder IDs in the script.';
-        return;
-    }
-    if (gapiInited && gisInited && tokenClient) {
+    if (tokenClient) {
         tokenClient.requestAccessToken({prompt: 'consent'});
     } else {
-        googleAuthStatusEl.textContent = 'Google services not fully loaded yet. Please wait.';
+        if(googleAuthStatusEl) googleAuthStatusEl.textContent = 'Google services not fully loaded yet. Please wait and try again.';
     }
 }
 
@@ -162,55 +155,49 @@ function handleGoogleSignout() {
         google.accounts.oauth2.revoke(token.access_token, () => {
             gapi.client.setToken(''); 
             updateGAuthButtonStatus();
-            googleSyncStatusEl.textContent = 'Signed out.';
+            if(googleSyncStatusEl) googleSyncStatusEl.textContent = 'Signed out.';
         });
-    } else {
-        gapi.client.setToken(''); 
-        updateGAuthButtonStatus();
-        googleSyncStatusEl.textContent = 'Signed out.';
     }
 }
 
 async function syncToGoogleSheets() {
-    googleSyncStatusEl.className = 'sync-status';
     if (workoutHistory.length === 0) {
         googleSyncStatusEl.textContent = "No workout data to sync.";
-        googleSyncStatusEl.classList.add('status-warning');
+        googleSyncStatusEl.style.color = 'orange';
         return;
     }
      if (!gapi.client.getToken() || !gapi.client.getToken().access_token) {
         googleSyncStatusEl.textContent = "Please authorize with Google first.";
-        googleSyncStatusEl.classList.add('status-error');
+        googleSyncStatusEl.style.color = 'red';
         handleGoogleAuth(); 
         return;
     }
 
     googleSyncStatusEl.textContent = "Syncing data to Google Sheets...";
-    googleSyncStatusEl.classList.add('status-info');
+    googleSyncStatusEl.style.color = 'var(--color-primary)';
     syncGoogleSheetsBtn.disabled = true;
 
-    const valuesToAppend = workoutHistory.flatMap(workout =>
-        workout.exercises.flatMap(ex => {
+    const valuesToAppend = [];
+    workoutHistory.forEach(workout => {
+        workout.exercises.forEach(ex => {
             if (ex.sets && ex.sets.length > 0) { 
-                return ex.sets.map((set, index) => [
-                    workout.date, workout.duration, ex.muscleGroup, ex.name,
-                    index + 1, set.reps, set.weight, "", "", ""
-                ]);
+                ex.sets.forEach((set, index) => {
+                    valuesToAppend.push([
+                        workout.date, workout.duration, ex.muscleGroup, ex.name,
+                        index + 1, set.reps, set.weight, "", "", ""  
+                    ]);
+                });
             } else if (ex.cardio) { 
-                return [[
+                valuesToAppend.push([
                     workout.date, workout.duration, ex.muscleGroup, ex.name,
                     "", "", "", ex.cardio.incline, ex.cardio.speed, ex.cardio.duration
-                ]];
+                ]);
             }
-            return [];
-        })
-    );
+        });
+    });
 
     try {
-        if (!gapi.client.sheets) {
-            throw new Error("Google Sheets API client not loaded.");
-        }
-        await gapi.client.sheets.spreadsheets.values.append({
+        const response = await gapi.client.sheets.spreadsheets.values.append({
             spreadsheetId: GOOGLE_SPREADSHEET_ID,
             range: GOOGLE_SHEET_RANGE,
             valueInputOption: 'USER_ENTERED', 
@@ -218,11 +205,10 @@ async function syncToGoogleSheets() {
             resource: { values: valuesToAppend },
         });
         googleSyncStatusEl.textContent = `Successfully synced ${valuesToAppend.length} rows.`;
-        googleSyncStatusEl.className = 'sync-status status-success';
+        googleSyncStatusEl.style.color = 'var(--color-success)';
     } catch (err) {
-        console.error('Error syncing to Google Sheets:', err);
         googleSyncStatusEl.textContent = `Error syncing: ${err.result?.error?.message || err.message}.`;
-        googleSyncStatusEl.className = 'sync-status status-error';
+        googleSyncStatusEl.style.color = 'var(--color-danger)';
     } finally {
         syncGoogleSheetsBtn.disabled = false;
         updateGAuthButtonStatus(); 
@@ -235,119 +221,184 @@ function navigateTo(viewId) {
     views[viewId].classList.remove('hidden');
 
     Object.values(navLinks).forEach(link => link.classList.remove('nav-link-active'));
-    if (navLinks[viewId]) navLinks[viewId].classList.add('nav-link-active');
+    if (navLinks[viewId]) {
+         navLinks[viewId].classList.add('nav-link-active');
+    } else if (viewId === 'activeWorkout') {
+        navLinks.home.classList.add('nav-link-active');
+    }
 
     if (viewId === 'home') renderHomeView();
     if (viewId === 'history') renderHistoryView();
     if (viewId === 'progress') renderProgressView();
     if (viewId === 'export') {
         updateGAuthButtonStatus(); 
-        googleSyncStatusEl.textContent = ''; 
+        if (googleSyncStatusEl) googleSyncStatusEl.textContent = ''; 
     }
+    
+    updateUiForActiveState();
 }
 
 // --- Data Persistence ---
-function loadWorkoutHistory() {
-    const storedHistory = localStorage.getItem('gymTrackerHistory');
+function loadState() {
+    const storedHistory = localStorage.getItem(HISTORY_KEY);
     if (storedHistory) workoutHistory = JSON.parse(storedHistory);
+
+    const storedActiveWorkout = localStorage.getItem(ACTIVE_WORKOUT_KEY);
+    if (storedActiveWorkout) activeWorkout = JSON.parse(storedActiveWorkout);
 }
-function saveWorkoutHistory() {
-    localStorage.setItem('gymTrackerHistory', JSON.stringify(workoutHistory));
+
+function saveState() {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(workoutHistory));
+    if (activeWorkout) {
+        localStorage.setItem(ACTIVE_WORKOUT_KEY, JSON.stringify(activeWorkout));
+    } else {
+        localStorage.removeItem(ACTIVE_WORKOUT_KEY);
+    }
 }
+
 function clearAllWorkoutHistory() {
-    if (confirm("Are you sure? This will delete all workout history permanently.")) {
+    if (confirm("Are you sure you want to delete all workout history? This action cannot be undone.")) {
         workoutHistory = [];
-        saveWorkoutHistory();
+        activeWorkout = null;
+        saveState();
         renderHistoryView();
         renderHomeView();    
         renderProgressView(); 
+        updateUiForActiveState();
+        alert("All workout history has been cleared.");
     }
 }
 
-// --- View Rendering ---
+function updateUiForActiveState() {
+    if (activeWorkout) {
+        startWorkoutBtn.textContent = 'Resume Workout';
+        navLinks.home.textContent = 'Active Workout';
+    } else {
+        startWorkoutBtn.textContent = "+ Start Today's Workout";
+        navLinks.home.textContent = 'Home';
+        if(timerInterval) clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
+
+// --- Home View ---
 function renderHomeView() {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-    const workoutsLastWeek = workoutHistory.filter(w => new Date(w.date) >= oneWeekAgo);
+    const workoutsLastWeek = workoutHistory.filter(workout => new Date(workout.date) >= oneWeekAgo);
     workoutsThisWeekCount.textContent = workoutsLastWeek.length.toString();
-}
-
-function renderHistoryView() {
-    historyList.innerHTML = ''; 
-    if (workoutHistory.length === 0) {
-        historyList.innerHTML = '<p class="text-secondary">No workouts recorded yet.</p>';
-        return;
-    }
-    [...workoutHistory].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).forEach(workout => {
-        const cardEl = document.createElement('div');
-        cardEl.className = 'card';
-        let exercisesSummary = workout.exercises.map(ex => {
-            let summary = `<strong class="text-accent">${ex.name}</strong> (${ex.muscleGroup})`;
-            if (ex.sets?.length) summary += `: ${ex.sets.length} set(s)`;
-            else if (ex.cardio) summary += `: ${ex.cardio.duration} min`;
-            return summary;
-        }).join('<br>');
-        cardEl.innerHTML = `
-            <div class="history-card-header">
-                <h3 class="text-lg font-semibold">${new Date(workout.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h3>
-                <span class="text-sm text-secondary">${workout.duration}</span>
-            </div>
-            <div class="text-sm">${exercisesSummary || 'No exercises logged.'}</div>
-        `;
-        historyList.appendChild(cardEl);
-    });
-}
-
-function renderProgressView() {
-    populateProgressExerciseSelect(); 
+    updateUiForActiveState();
 }
 
 // --- Stopwatch ---
 function formatTime(ms) {
-    const s = Math.floor(ms / 1000);
-    return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor(s%3600/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+    const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+    const seconds = String(totalSeconds % 60).padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
 }
+
 function startStopwatch() {
-    stopwatchStartTime = Date.now();
-    stopwatchDisplay.textContent = formatTime(0);
-    timerInterval = setInterval(() => {
-        if (stopwatchStartTime) {
-            stopwatchDisplay.textContent = formatTime(Date.now() - stopwatchStartTime);
-        }
-    }, 1000);
+    if (!activeWorkout || !activeWorkout.startTime) return;
+    if (timerInterval) clearInterval(timerInterval);
+    
+    const updateDisplay = () => {
+        const elapsedTime = Date.now() - activeWorkout.startTime;
+        stopwatchDisplay.textContent = formatTime(elapsedTime);
+    };
+    
+    timerInterval = setInterval(updateDisplay, 1000);
+    updateDisplay();
 }
+
 function stopStopwatch() {
     clearInterval(timerInterval);
     timerInterval = null;
-    return stopwatchStartTime ? formatTime(Date.now() - stopwatchStartTime) : '00:00:00';
+    if (!activeWorkout || !activeWorkout.startTime) return formatTime(0);
+    const elapsedTime = Date.now() - activeWorkout.startTime;
+    return formatTime(elapsedTime);
 }
 
 // --- Active Workout ---
-function initializeActiveWorkoutView() {
-    activeWorkout = { id: Date.now(), date: new Date().toISOString().split('T')[0], startTime: Date.now(), duration: null, exercises: [] };
+function resetActiveWorkoutInputs() {
+    muscleGroupSelect.value = '';
+    exerciseSelect.innerHTML = '<option value="">-- Choose an exercise --</option>';
+    exerciseSelectionArea.classList.add('hidden');
+    cardioInputArea.classList.add('hidden');
+    strengthInputArea.classList.add('hidden');
+    workoutProgressionButtons.classList.add('hidden');
+    
+    document.getElementById('incline-input').value = '';
+    document.getElementById('speed-input').value = '';
+    document.getElementById('cardio-duration-input').value = '';
+    
+    document.getElementById('reps-input').value = '';
+    document.getElementById('weight-input').value = '';
+    document.getElementById('bulk-sets-count').value = '';
+    document.getElementById('bulk-reps-input').value = '';
+    document.getElementById('bulk-weight-input').value = '';
+    loggedSetsDisplay.innerHTML = '';
+    currentExerciseLogTitleSpan.textContent = '';
     currentExerciseLog = null;
-    resetActiveWorkoutUI();
+}
+
+function renderActiveWorkoutState() {
+    if (!activeWorkout) return;
+    
+    loggedWorkoutSummary.innerHTML = '';
+    if (activeWorkout.exercises.length > 0) {
+        activeWorkoutSummaryCard.classList.remove('hidden');
+        activeWorkout.exercises.forEach(ex => {
+             let summary = `<div><strong>${ex.name}</strong> (${ex.muscleGroup})`;
+            if (ex.sets && ex.sets.length > 0) {
+                summary += `: ${ex.sets.length} set(s)`;
+            } else if (ex.cardio) {
+                summary += `: ${ex.cardio.duration} min`;
+            }
+             summary += `</div>`;
+            loggedWorkoutSummary.innerHTML += summary;
+        });
+    } else {
+         activeWorkoutSummaryCard.classList.add('hidden');
+    }
+}
+
+function resumeActiveWorkout() {
+    resetActiveWorkoutInputs();
     populateMuscleGroupDropdown();
+    renderActiveWorkoutState();
     startStopwatch();
     navigateTo('activeWorkout');
 }
 
-function resetActiveWorkoutUI() {
-    ['muscle-group-select', 'incline-input', 'speed-input', 'cardio-duration-input', 'reps-input', 'weight-input', 'bulk-sets-count', 'bulk-reps-input', 'bulk-weight-input'].forEach(id => {
-        const el = document.getElementById(id);
-        if(el) el.value = '';
-    });
-    exerciseSelect.innerHTML = '<option value="">-- Choose an exercise --</option>';
-    loggedSetsDisplay.innerHTML = '';
-    if(currentExerciseLogTitleSpan) currentExerciseLogTitleSpan.textContent = '';
-    [exerciseSelectionArea, cardioInputArea, strengthInputArea, workoutProgressionButtons].forEach(el => el.classList.add('hidden'));
+function initializeActiveWorkoutView() {
+     if (activeWorkout && !confirm('You have an unfinished workout. Discard it and start new?')) {
+        return; 
+    }
+    
+    activeWorkout = {
+        id: Date.now(),
+        date: new Date().toISOString().split('T')[0],
+        startTime: Date.now(),
+        duration: null,
+        exercises: []
+    };
+    saveState();
+    
+    resetActiveWorkoutInputs();
+    populateMuscleGroupDropdown();
+    renderActiveWorkoutState();
+    startStopwatch();
+    navigateTo('activeWorkout');
 }
 
 function populateMuscleGroupDropdown() {
     muscleGroupSelect.innerHTML = '<option value="">-- Choose a muscle group --</option>'; 
     Object.keys(exerciseLibrary).forEach(group => {
         const option = document.createElement('option');
-        option.value = option.textContent = group;
+        option.value = group;
+        option.textContent = group;
         muscleGroupSelect.appendChild(option);
     });
 }
@@ -355,21 +406,30 @@ function populateMuscleGroupDropdown() {
 function handleMuscleGroupChange() {
     const selectedGroup = muscleGroupSelect.value;
     exerciseSelect.innerHTML = '<option value="">-- Choose an exercise --</option>';
-    [strengthInputArea, cardioInputArea, exerciseSelectionArea, workoutProgressionButtons].forEach(id => id.classList.add('hidden'));
+    strengthInputArea.classList.add('hidden');
+    cardioInputArea.classList.add('hidden');
+    exerciseSelectionArea.classList.add('hidden');
+    workoutProgressionButtons.classList.add('hidden'); 
     loggedSetsDisplay.innerHTML = ''; 
     currentExerciseLog = null;
 
     if (!selectedGroup) return;
 
-    workoutProgressionButtons.classList.remove('hidden');
     if (selectedGroup === "Treadmill") {
         cardioInputArea.classList.remove('hidden');
-        currentExerciseLog = { muscleGroup: selectedGroup, name: exerciseLibrary[selectedGroup][0] };
+        currentExerciseLog = {
+            muscleGroup: selectedGroup,
+            name: exerciseLibrary[selectedGroup][0], 
+            cardio: null
+        };
+        workoutProgressionButtons.classList.remove('hidden');
     } else {
         exerciseSelectionArea.classList.remove('hidden');
-        exerciseLibrary[selectedGroup].forEach(ex => {
+        const exercises = exerciseLibrary[selectedGroup];
+        exercises.forEach(ex => {
             const option = document.createElement('option');
-            option.value = option.textContent = ex;
+            option.value = ex;
+            option.textContent = ex;
             exerciseSelect.appendChild(option);
         });
     }
@@ -380,7 +440,7 @@ function handleExerciseSelectChange() {
     const selectedGroup = muscleGroupSelect.value;
     loggedSetsDisplay.innerHTML = ''; 
 
-    if (!selectedExercise) {
+    if (!selectedExercise || !selectedGroup || selectedGroup === "Treadmill") {
         strengthInputArea.classList.add('hidden');
         currentExerciseLog = null;
         workoutProgressionButtons.classList.add('hidden');
@@ -388,167 +448,214 @@ function handleExerciseSelectChange() {
     }
     
     strengthInputArea.classList.remove('hidden');
-    workoutProgressionButtons.classList.remove('hidden');
-    if(currentExerciseLogTitleSpan) currentExerciseLogTitleSpan.textContent = selectedExercise;
+    currentExerciseLogTitleSpan.textContent = selectedExercise;
     currentExerciseLog = { muscleGroup: selectedGroup, name: selectedExercise, sets: [] };
+    workoutProgressionButtons.classList.remove('hidden');
     renderLoggedSets(); 
 }
 
 function renderLoggedSets() {
-    if (!currentExerciseLog?.sets) return;
+    if (!currentExerciseLog || !currentExerciseLog.sets) return;
     loggedSetsDisplay.innerHTML = '';
     if (currentExerciseLog.sets.length === 0) {
-         loggedSetsDisplay.innerHTML = '<p class="text-sm text-secondary">No sets logged yet.</p>';
+         loggedSetsDisplay.innerHTML = '<p class="placeholder-text">No sets logged for this exercise yet.</p>';
          return;
     }
+
     currentExerciseLog.sets.forEach((set, index) => {
         const setEl = document.createElement('div');
-        setEl.className = 'logged-set-item';
+        setEl.className = 'set-item';
         setEl.innerHTML = `
             <span>Set ${index + 1}: ${set.reps} reps @ ${set.weight} kg/lb</span>
             <button class="remove-set-btn" data-index="${index}" aria-label="Remove set ${index+1}">Remove</button>
         `;
         loggedSetsDisplay.appendChild(setEl);
     });
+    
     document.querySelectorAll('.remove-set-btn').forEach(btn => {
-        btn.addEventListener('click', e => {
-            if (currentExerciseLog && currentExerciseLog.sets) {
-                const target = e.target;
-                currentExerciseLog.sets.splice(parseInt(target.dataset.index), 1);
-                renderLoggedSets();
-            }
+        btn.addEventListener('click', (e) => {
+            const indexToRemove = parseInt(e.target.dataset.index);
+            currentExerciseLog.sets.splice(indexToRemove, 1);
+            renderLoggedSets();
         });
     });
 }
 
 function addSetToActiveWorkout(isBulk = false) {
-    if (!currentExerciseLog || !currentExerciseLog.sets) return;
-    let setsToAdd = [];
+    if (!currentExerciseLog || currentExerciseLog.muscleGroup === "Treadmill") return;
+
+    const setsToAdd = [];
     if (isBulk) {
-        const count = parseInt(document.getElementById('bulk-sets-count').value);
+        const setCount = parseInt(document.getElementById('bulk-sets-count').value);
         const reps = parseInt(document.getElementById('bulk-reps-input').value);
         const weight = parseFloat(document.getElementById('bulk-weight-input').value);
-        if (isNaN(count) || isNaN(reps) || isNaN(weight) || count <= 0) { alert('Enter valid bulk sets.'); return; }
-        for (let i = 0; i < count; i++) setsToAdd.push({ reps, weight });
+        if (isNaN(setCount) || isNaN(reps) || isNaN(weight) || setCount <= 0 || reps <=0 || weight < 0) {
+            alert('Please enter valid numbers for bulk sets, reps, and weight.');
+            return;
+        }
+        for (let i = 0; i < setCount; i++) setsToAdd.push({ reps, weight });
         document.getElementById('bulk-sets-count').value = '';
         document.getElementById('bulk-reps-input').value = '';
         document.getElementById('bulk-weight-input').value = '';
     } else {
         const reps = parseInt(document.getElementById('reps-input').value);
         const weight = parseFloat(document.getElementById('weight-input').value);
-        if (isNaN(reps) || isNaN(weight)) { alert('Enter valid reps and weight.'); return; }
+         if (isNaN(reps) || isNaN(weight) || reps <= 0 || weight < 0) {
+            alert('Please enter valid numbers for reps and weight.');
+            return;
+        }
         setsToAdd.push({ reps, weight });
         document.getElementById('reps-input').value = '';
         document.getElementById('weight-input').value = '';
     }
+    
     currentExerciseLog.sets.push(...setsToAdd);
     renderLoggedSets();
 }
 
 function logCardioDetails() {
     if (!currentExerciseLog || currentExerciseLog.muscleGroup !== "Treadmill") return;
-    const incline = parseFloat(document.getElementById('incline-input').value);
+
+    const incline = parseFloat(document.getElementById('incline-input').value) || 0;
     const speed = parseFloat(document.getElementById('speed-input').value);
     const duration = parseInt(document.getElementById('cardio-duration-input').value);
-    if (isNaN(duration) || duration <= 0 || isNaN(incline) || isNaN(speed)) { alert('Enter valid cardio details.'); return; }
+
+    if (isNaN(duration) || duration <= 0 || isNaN(speed) || speed <=0) {
+        alert('Please enter valid speed (>0) and duration (>0).');
+        return;
+    }
     currentExerciseLog.cardio = { incline, speed, duration };
-    alert(`Treadmill logged: ${duration} mins, Incline ${incline}%, Speed ${speed}.`);
+    alert(`${currentExerciseLog.name} logged: ${duration} mins, Incline ${incline}%, Speed ${speed}.`);
 }
 
 function finalizeCurrentExercise() {
-    if (activeWorkout && currentExerciseLog && ((currentExerciseLog.sets && currentExerciseLog.sets.length > 0) || currentExerciseLog.cardio)) {
+     if (currentExerciseLog && ((currentExerciseLog.sets && currentExerciseLog.sets.length > 0) || currentExerciseLog.cardio)) {
         activeWorkout.exercises.push({...currentExerciseLog}); 
+        saveState();
+        renderActiveWorkoutState();
     }
-    resetActiveWorkoutUI();
-    muscleGroupSelect.value = '';
-    handleMuscleGroupChange(); 
+    resetActiveWorkoutInputs();
+    populateMuscleGroupDropdown();
 }
 
 function finishWorkout() {
     finalizeCurrentExercise(); 
+    
     if (!activeWorkout || activeWorkout.exercises.length === 0) {
         alert("Please log at least one exercise before finishing.");
-        resetActiveWorkoutUI();
-        populateMuscleGroupDropdown();
         return;
     }
+
     activeWorkout.duration = stopStopwatch();
     workoutHistory.unshift({...activeWorkout}); 
-    saveWorkoutHistory();
     activeWorkout = null;
+    saveState();
     navigateTo('home');
 }
 
-// --- Charting ---
+// --- History View ---
+function renderHistoryView() {
+    historyList.innerHTML = ''; 
+    if (workoutHistory.length === 0) {
+        historyList.innerHTML = '<p class="placeholder-text">No workouts recorded yet.</p>';
+        return;
+    }
+
+    workoutHistory.forEach(workout => {
+        const cardEl = document.createElement('div');
+        cardEl.className = 'card';
+        
+        let exercisesSummary = workout.exercises.map(ex => {
+            let summary = `<strong>${ex.name}</strong> (${ex.muscleGroup})`;
+            if (ex.sets && ex.sets.length > 0) {
+                summary += `: ${ex.sets.length} set(s)`;
+            } else if (ex.cardio) {
+                summary += `: ${ex.cardio.duration} min`;
+            }
+            return summary;
+        }).join('<br>');
+
+        cardEl.innerHTML = `
+            <div class="workout-card-header">
+                <h3>${new Date(workout.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</h3>
+                <span>${workout.duration}</span>
+            </div>
+            <div class="exercises-summary">${exercisesSummary || 'No exercises logged.'}</div>
+        `;
+        historyList.appendChild(cardEl);
+    });
+}
+
+// --- Progress View ---
 function getUniqueStrengthExercises() {
-    return Array.from(new Set(workoutHistory.flatMap(w => w.exercises.filter(e => e.sets && e.sets.length > 0).map(e => e.name)))).sort();
+    const exercises = new Set();
+    workoutHistory.forEach(w => w.exercises.forEach(ex => {
+        if (ex.sets && ex.sets.length > 0) exercises.add(ex.name);
+    }));
+    return Array.from(exercises).sort();
 }
 
 function populateProgressExerciseSelect() {
     const uniqueExercises = getUniqueStrengthExercises();
     progressExerciseSelect.innerHTML = '';
+    const chartCanvas = document.getElementById('progress-chart');
+    if (!chartCanvas) return;
+    const chartCtx = chartCanvas.getContext('2d');
     if (progressChartInstance) progressChartInstance.destroy();
     progressChartInstance = null;
-    
-    const canvas = document.getElementById('progress-chart');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    chartCtx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
 
     if (uniqueExercises.length === 0) {
         progressExerciseSelect.innerHTML = '<option value="">-- No strength exercises recorded --</option>';
+        chartCtx.textAlign = 'center';
+        chartCtx.font = "16px 'Inter', sans-serif";
+        chartCtx.fillStyle = 'var(--color-text-muted)'; 
+        chartCtx.fillText('No strength data to display.', chartCanvas.width / 2, chartCanvas.height / 2);
         return;
     }
 
     uniqueExercises.forEach(exName => {
         const option = document.createElement('option');
-        option.value = option.textContent = exName;
+        option.value = exName;
+        option.textContent = exName;
         progressExerciseSelect.appendChild(option);
     });
 
     if (uniqueExercises.length > 0) {
-        progressExerciseSelect.value = uniqueExercises[0]; 
-        updateProgressChart();
+         progressExerciseSelect.value = uniqueExercises[0]; 
+         updateProgressChart();
     }
-}
-
-function getChartThemeOptions() {
-    const style = getComputedStyle(document.body);
-    const textColor = style.getPropertyValue('--c-text-secondary');
-    const gridColor = style.getPropertyValue('--c-grid');
-    return {
-        scales: {
-            y: { beginAtZero: true, title: { display: true, text: 'Weight (kg/lb)', color: textColor }, ticks: { color: textColor }, grid: { color: gridColor, borderColor: gridColor } },
-            x: { title: { display: true, text: 'Date', color: textColor }, ticks: { color: textColor }, grid: { color: gridColor, borderColor: gridColor } }
-        },
-        plugins: { legend: { labels: { color: textColor } } }
-    };
 }
 
 function updateProgressChart() {
     const selectedExercise = progressExerciseSelect.value;
-    const canvas = document.getElementById('progress-chart');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const chartCanvas = document.getElementById('progress-chart');
+    if (!chartCanvas) return;
+    const ctx = chartCanvas.getContext('2d');
+
     if (progressChartInstance) progressChartInstance.destroy();
+    if (!selectedExercise) {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.textAlign = 'center';
+        ctx.font = "16px 'Inter', sans-serif";
+        ctx.fillStyle = 'var(--color-text-muted)'; 
+        ctx.fillText('Select an exercise to view progress.', ctx.canvas.width / 2, ctx.canvas.height / 2);
+        return;
+    }
 
-    if (!selectedExercise) { return; }
+    const dataPoints = [];
+    workoutHistory.forEach(workout => {
+        const maxWeight = workout.exercises
+            .filter(ex => ex.name === selectedExercise && ex.sets)
+            .flatMap(ex => ex.sets)
+            .reduce((max, set) => Math.max(max, set.weight), 0);
+        if (maxWeight > 0) dataPoints.push({ date: workout.date, maxWeight });
+    });
+    
+    dataPoints.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    const dataPoints = workoutHistory
-        .map(workout => {
-            const exerciseInstances = workout.exercises.filter(ex => ex.name === selectedExercise && ex.sets && ex.sets.length > 0);
-            if (exerciseInstances.length === 0) return null;
-            
-            const maxWeight = Math.max(0, ...exerciseInstances.flatMap(ex => ex.sets.map(set => set.weight)));
-            
-            return maxWeight > 0 ? { date: workout.date, maxWeight } : null;
-        })
-        .filter(dp => dp !== null)
-        .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    if (dataPoints.length === 0) { /* ... handle no data ... */ return; }
 
-    const style = getComputedStyle(document.body);
     progressChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
@@ -556,80 +663,98 @@ function updateProgressChart() {
             datasets: [{
                 label: `Max Weight for ${selectedExercise}`,
                 data: dataPoints.map(dp => dp.maxWeight),
-                borderColor: style.getPropertyValue('--c-accent'),
-                backgroundColor: style.getPropertyValue('--c-accent-transparent'),
+                borderColor: 'var(--color-primary)', 
+                backgroundColor: 'rgba(14, 165, 233, 0.1)',
                 tension: 0.1,
                 fill: true,
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false, ...getChartThemeOptions() }
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'Weight (kg/lb)'} },
+                x: { title: { display: true, text: 'Date'} }
+            }
+        }
     });
 }
 
-// --- Theme Management ---
-function applyTheme(theme) {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-    sunIcon.classList.toggle('hidden', theme === 'dark');
-    moonIcon.classList.toggle('hidden', theme !== 'dark');
-    localStorage.setItem('theme', theme);
-    if (!views.progress.classList.contains('hidden')) updateProgressChart();
+function renderProgressView() {
+    populateProgressExerciseSelect(); 
 }
 
-function toggleTheme() {
-    const newTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
-    applyTheme(newTheme);
+// --- Export View ---
+function generateCSV() {
+    if (workoutHistory.length === 0) {
+        alert("No workout data to export.");
+        return null;
+    }
+    let csvContent = "Date,Duration,Muscle Group,Exercise,Set Number,Reps,Weight,Incline,Speed,Cardio Duration (min)\n";
+    workoutHistory.forEach(workout => {
+        workout.exercises.forEach(ex => {
+            const rowBase = [workout.date, workout.duration, ex.muscleGroup, ex.name];
+            if (ex.sets && ex.sets.length > 0) { 
+                ex.sets.forEach((set, index) => {
+                    const row = [...rowBase, index + 1, set.reps, set.weight, "", "", ""];
+                    csvContent += row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",") + "\n";
+                });
+            } else if (ex.cardio) { 
+                const row = [...rowBase, "", "", "", ex.cardio.incline, ex.cardio.speed, ex.cardio.duration];
+                csvContent += row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",") + "\n";
+            }
+        });
+    });
+    return csvContent;
 }
 
-// --- Export ---
-function downloadCSV() {
-    if (workoutHistory.length === 0) { alert("No data to export."); return; }
-    let csvContent = "Date,Duration,Muscle Group,Exercise,Set,Reps,Weight,Incline,Speed,Cardio Duration\n";
-    const rows = workoutHistory.flatMap(w => w.exercises.map(ex => {
-        if (ex.sets?.length) return ex.sets.map((s,i) => [w.date,w.duration,ex.muscleGroup,ex.name,i+1,s.reps,s.weight,"","",""].join(','));
-        if (ex.cardio) return [[w.date,w.duration,ex.muscleGroup,ex.name,"","", "",ex.cardio.incline,ex.cardio.speed,ex.cardio.duration].join(',')];
-        return [];
-    }).flat());
-    csvContent += rows.join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+function downloadCSV(csvString) {
+    if (!csvString) return;
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "workout_history.csv";
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "workout_history.csv");
+    document.body.appendChild(link);
     link.click();
-    URL.revokeObjectURL(link.href);
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 }
 
 // --- Event Listeners ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Nav
-    navLinks.home.addEventListener('click', (e) => { e.preventDefault(); navigateTo('home'); });
+    // Navigation
+    navLinks.home.addEventListener('click', (e) => { 
+        e.preventDefault(); 
+        navigateTo(activeWorkout ? 'activeWorkout' : 'home');
+    });
     navLinks.history.addEventListener('click', (e) => { e.preventDefault(); navigateTo('history'); });
     navLinks.progress.addEventListener('click', (e) => { e.preventDefault(); navigateTo('progress'); });
     navLinks.export.addEventListener('click', (e) => { e.preventDefault(); navigateTo('export'); });
-    // Workout
-    startWorkoutBtn.addEventListener('click', initializeActiveWorkoutView);
+
+    // Workout Flow
+    startWorkoutBtn.addEventListener('click', () => activeWorkout ? resumeActiveWorkout() : initializeActiveWorkoutView());
     muscleGroupSelect.addEventListener('change', handleMuscleGroupChange);
     exerciseSelect.addEventListener('change', handleExerciseSelectChange);
+    nextExerciseBtn.addEventListener('click', finalizeCurrentExercise);
+    finishWorkoutBtn.addEventListener('click', finishWorkout);
+
+    // Logging
     addSetBtn.addEventListener('click', () => addSetToActiveWorkout(false));
     addBulkSetsBtn.addEventListener('click', () => addSetToActiveWorkout(true));
     logCardioBtn.addEventListener('click', logCardioDetails);
-    nextExerciseBtn.addEventListener('click', finalizeCurrentExercise);
-    finishWorkoutBtn.addEventListener('click', finishWorkout);
-    // History & Progress
+
+    // Other Actions
     clearHistoryBtn.addEventListener('click', clearAllWorkoutHistory);
     progressExerciseSelect.addEventListener('change', updateProgressChart);
-    // Export
-    exportCsvBtn.addEventListener('click', downloadCSV);
+    exportCsvBtn.addEventListener('click', () => downloadCSV(generateCSV()));
+
+    // Google Sync
     googleAuthorizeBtn.addEventListener('click', handleGoogleAuth);
     googleSignoutBtn.addEventListener('click', handleGoogleSignout);
     syncGoogleSheetsBtn.addEventListener('click', syncToGoogleSheets);
-    // Theme
-    themeToggleBtn.addEventListener('click', toggleTheme);
 
-    // Initial Load
-    loadWorkoutHistory();
+    // --- Initialization ---
+    loadState();
     navigateTo('home'); 
-    updateGAuthButtonStatus();
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    applyTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
+    updateGAuthButtonStatus(); 
 });

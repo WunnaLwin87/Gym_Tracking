@@ -8,27 +8,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js" defer></script>
     <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 </head>
 <body>
 
     <!-- Navigation -->
-    <nav class="top-nav">
+    <nav>
         <div class="nav-container">
-            <div class="nav-content">
-                <div class="nav-links-group">
-                    <a href="#" id="nav-home" class="nav-link nav-link-active">Home</a>
-                    <a href="#" id="nav-history" class="nav-link">History</a>
-                    <a href="#" id="nav-progress" class="nav-link">Progress</a>
-                    <a href="#" id="nav-export" class="nav-link">Export</a>
-                </div>
-                <button id="theme-toggle" type="button" class="theme-toggle-btn">
-                    <svg id="theme-toggle-sun" class="icon hidden" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.121-3.536a1 1 0 011.414 0l.707.707a1 1 0 01-1.414 1.414l-.707-.707a1 1 0 010-1.414zM4 10a1 1 0 01-1-1H2a1 1 0 110-2h1a1 1 0 011 1zm-1.536 2.464a1 1 0 010 1.414l.707.707a1 1 0 01-1.414 1.414l-.707-.707a1 1 0 011.414-1.414zM10 18a1 1 0 01-1-1v-1a1 1 0 112 0v1a1 1 0 01-1 1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
-                    <svg id="theme-toggle-moon" class="icon hidden" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
-                    <span class="sr-only">Toggle theme</span>
-                </button>
-            </div>
+            <a href="#" id="nav-home" class="nav-link nav-link-active">Home</a>
+            <a href="#" id="nav-history" class="nav-link">History</a>
+            <a href="#" id="nav-progress" class="nav-link">Progress</a>
+            <a href="#" id="nav-export" class="nav-link">Export</a>
         </div>
     </nav>
 
@@ -36,126 +28,133 @@
 
         <!-- Home View -->
         <div id="home-view">
-            <header class="mb-8">
-                <h1 class="text-3xl font-bold">Good morning, Wunna!</h1>
-                <p class="text-secondary">Ready to crush your goals today?</p>
+            <header>
+                <h1>Good morning, Wunna!</h1>
+                <p>Ready to crush your goals today?</p>
             </header>
 
-            <div class="mb-8">
-                <button id="start-workout-btn" class="btn btn-primary w-full text-lg py-3">
+            <div class="start-workout-wrapper">
+                <button id="start-workout-btn" class="btn btn-primary btn-full-width btn-large">
                     + Start Today's Workout
                 </button>
             </div>
 
             <div class="card">
-                <h2 class="text-xl font-semibold mb-2">Workouts This Week</h2>
-                <p class="text-3xl font-bold text-accent" id="workouts-this-week-count">0</p>
-                <p class="text-sm text-secondary">Completed in the last 7 days.</p>
+                <h2>Workouts This Week</h2>
+                <p id="workouts-this-week-count" class="metric-highlight">0</p>
+                <p class="subtitle">Completed in the last 7 days.</p>
             </div>
         </div>
 
         <!-- Active Workout View -->
         <div id="active-workout-view" class="hidden">
-            <h1 class="text-2xl font-bold mb-4 text-center">Active Workout</h1>
-            <div id="stopwatch-display" class="stopwatch-display">00:00:00</div>
+            <h1>Active Workout</h1>
+            <div id="stopwatch-display">00:00:00</div>
 
-            <div id="muscle-group-selection-area" class="mb-6">
-                <label for="muscle-group-select" class="form-label">1. Select Muscle Group</label>
+            <div id="active-workout-summary-card" class="card summary-card hidden">
+                <h3>Logged in this Session:</h3>
+                <div id="logged-workout-summary" class="summary-list">
+                    <!-- Summary items will be injected here -->
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="muscle-group-select">1. Select Muscle Group</label>
                 <select id="muscle-group-select" class="input-field">
                     <option value="">-- Choose a muscle group --</option>
                 </select>
             </div>
 
-            <div id="exercise-selection-area" class="mb-6 hidden">
-                <label for="exercise-select" class="form-label">2. Select Exercise</label>
+            <div id="exercise-selection-area" class="form-group hidden">
+                <label for="exercise-select">2. Select Exercise</label>
                 <select id="exercise-select" class="input-field">
                     <option value="">-- Choose an exercise --</option>
                 </select>
             </div>
             
-            <div id="cardio-input-area" class="mb-6 hidden card">
-                <h3 class="text-lg font-semibold mb-3">Log Treadmill Details</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div id="cardio-input-area" class="card hidden">
+                <h3>Log Treadmill Details</h3>
+                <div class="grid-3-col">
                     <div>
-                        <label for="incline-input" class="form-label">Incline (%)</label>
+                        <label for="incline-input">Incline (%)</label>
                         <input type="number" id="incline-input" class="input-field" placeholder="e.g., 2">
                     </div>
                     <div>
-                        <label for="speed-input" class="form-label">Speed</label>
+                        <label for="speed-input">Speed</label>
                         <input type="number" id="speed-input" class="input-field" placeholder="e.g., 6">
                     </div>
                     <div>
-                        <label for="cardio-duration-input" class="form-label">Duration (min)</label>
+                        <label for="cardio-duration-input">Duration (min)</label>
                         <input type="number" id="cardio-duration-input" class="input-field" placeholder="e.g., 30">
                     </div>
                 </div>
-                <button id="log-cardio-btn" class="btn btn-primary mt-4 w-full sm:w-auto">Log Treadmill Session</button>
+                <button id="log-cardio-btn" class="btn btn-primary btn-full-width-sm">Log Treadmill Session</button>
             </div>
 
-            <div id="strength-input-area" class="mb-6 hidden card">
-                <h3 class="text-lg font-semibold mb-3" id="current-exercise-log-title">Log Sets for: <span class="font-bold text-accent"></span></h3>
+            <div id="strength-input-area" class="card hidden">
+                <h3 id="current-exercise-log-title">Log Sets for: <span></span></h3>
                 
-                <div id="logged-sets-display" class="mb-4 space-y-2">
+                <div id="logged-sets-display" class="logged-items-display">
                     <!-- Logged sets will appear here -->
                 </div>
 
                 <div class="set-input-group">
-                    <h4 class="text-md font-semibold mb-2">Add Individual Set</h4>
-                    <div class="grid grid-cols-2 gap-4 mb-2">
+                    <h4>Add Individual Set</h4>
+                    <div class="grid-2-col">
                         <div>
-                            <label for="reps-input" class="form-label-xs">Reps</label>
+                            <label for="reps-input">Reps</label>
                             <input type="number" id="reps-input" class="input-field" placeholder="e.g., 10">
                         </div>
                         <div>
-                            <label for="weight-input" class="form-label-xs">Weight (kg/lb)</label>
+                            <label for="weight-input">Weight (kg/lb)</label>
                             <input type="number" id="weight-input" class="input-field" placeholder="e.g., 50">
                         </div>
                     </div>
-                    <button id="add-set-btn" class="btn btn-secondary text-sm py-1-5 px-3 mb-4">+ Add Set</button>
+                    <button id="add-set-btn" class="btn btn-secondary btn-small">+ Add Set</button>
                 </div>
 
                 <div class="set-input-group">
-                    <h4 class="text-md font-semibold mb-2">Add Bulk Sets</h4>
-                    <div class="grid grid-cols-3 gap-4 mb-2">
+                    <h4>Add Bulk Sets</h4>
+                    <div class="grid-3-col">
                         <div>
-                            <label for="bulk-sets-count" class="form-label-xs">Sets</label>
+                            <label for="bulk-sets-count">Sets</label>
                             <input type="number" id="bulk-sets-count" class="input-field" placeholder="e.g., 3">
                         </div>
                         <div>
-                            <label for="bulk-reps-input" class="form-label-xs">Reps</label>
+                            <label for="bulk-reps-input">Reps</label>
                             <input type="number" id="bulk-reps-input" class="input-field" placeholder="e.g., 8">
                         </div>
                         <div>
-                            <label for="bulk-weight-input" class="form-label-xs">Weight</label>
+                            <label for="bulk-weight-input">Weight</label>
                             <input type="number" id="bulk-weight-input" class="input-field" placeholder="e.g., 45">
                         </div>
                     </div>
-                    <button id="add-bulk-sets-btn" class="btn btn-secondary text-sm py-1-5 px-3">Add All Sets</button>
+                    <button id="add-bulk-sets-btn" class="btn btn-secondary btn-small">Add All Sets</button>
                 </div>
             </div>
 
-            <div id="workout-progression-buttons" class="mt-8 workout-buttons-container hidden">
-                <button id="next-exercise-btn" class="btn btn-primary w-full sm:w-auto order-2 sm:order-1">Next Exercise</button>
-                <button id="finish-workout-btn" class="btn btn-success w-full sm:w-auto order-1 sm:order-2">Finish Workout</button>
+            <div id="workout-progression-buttons" class="hidden">
+                <button id="next-exercise-btn" class="btn btn-primary">Save & Next Exercise</button>
+                <button id="finish-workout-btn" class="btn btn-success">Finish Workout</button>
             </div>
         </div>
 
         <!-- History View -->
         <div id="history-view" class="hidden">
             <div class="view-header">
-                <h1 class="text-2xl font-bold">Workout History</h1>
-                <button id="clear-history-btn" class="btn btn-danger text-sm py-1-5 px-3">Clear All History</button>
+                <h1>Workout History</h1>
+                <button id="clear-history-btn" class="btn btn-danger btn-small">Clear All History</button>
             </div>
-            <div id="history-list" class="space-y-4">
-                <p class="text-secondary">No workouts recorded yet.</p>
+            <div id="history-list" class="item-list">
+                <p class="placeholder-text">No workouts recorded yet.</p>
             </div>
         </div>
 
         <!-- Progress View -->
         <div id="progress-view" class="hidden">
-            <h1 class="text-2xl font-bold mb-6">Strength Progress</h1>
-            <div class="mb-4">
-                <label for="progress-exercise-select" class="form-label">Select Exercise:</label>
+            <h1>Strength Progress</h1>
+            <div class="form-group">
+                <label for="progress-exercise-select">Select Exercise:</label>
                 <select id="progress-exercise-select" class="input-field">
                     <option value="">-- No strength exercises recorded --</option>
                 </select>
@@ -167,25 +166,24 @@
 
         <!-- Export View -->
         <div id="export-view" class="hidden">
-            <h1 class="text-2xl font-bold mb-6">Export Data</h1>
+            <h1>Export Data</h1>
             <div class="card">
-                <p class="mb-4 text-secondary">Download your complete workout history as a CSV file.</p>
-                <button id="export-csv-btn" class="btn btn-primary mb-6 w-full">Export Workout Data as CSV</button>
+                <p>Download your complete workout history as a CSV file.</p>
+                <button id="export-csv-btn" class="btn btn-primary btn-full-width">Export Workout Data as CSV</button>
                 
-                <hr class="divider">
+                <hr>
                 
-                <h2 class="text-xl font-semibold mb-3">Sync to Google Sheets</h2>
-                <p id="google-auth-status" class="text-sm text-secondary mb-3">Initializing...</p>
-                <div class="space-y-3">
-                    <button id="google-authorize-btn" class="btn btn-secondary w-full">Authorize Google Account</button>
-                    <button id="google-signout-btn" class="btn btn-secondary w-full hidden">Sign Out Google Account</button>
-                    <button id="sync-google-sheets-btn" class="btn btn-success w-full" disabled>Sync to Google Sheets</button>
+                <h2>Sync to Google Sheets</h2>
+                <p id="google-auth-status" class="subtitle">Initializing...</p>
+                <div class="button-group">
+                    <button id="google-authorize-btn" class="btn btn-secondary btn-full-width">Authorize Google Account</button>
+                    <button id="google-signout-btn" class="btn btn-secondary btn-full-width hidden">Sign Out Google Account</button>
+                    <button id="sync-google-sheets-btn" class="btn btn-success btn-full-width" disabled>Sync to Google Sheets</button>
                 </div>
-                <p id="google-sync-status" class="text-sm mt-3"></p>
+                <p id="google-sync-status"></p>
             </div>
         </div>
     </main>
 
-    <script src="script.js"></script>
 </body>
 </html>
