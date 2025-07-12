@@ -1,12 +1,11 @@
-
-
 const exerciseLibrary = {
-    "Chest": ["Incline Dumbbell Press", "Machine Chest Fly", "Incline Machine Press", "Flat Bench Press", "Decline Bench Press", "Dumbbell Flyes", "Push-ups"],
-    "Shoulders": ["Dumbbell Shoulder Press", "Lateral Raise", "Front Raise", "Reverse Pec Deck", "Arnold Press", "Upright Row"],
+    "Chest": ["Incline Dumbbell Press", "Incline Machine Press", "Flat Bench Press", "Machine Chest Fly", "Cable Flyes","Dumbbell Flyes", "Push-ups"],
+    "Shoulders": ["Dumbbell Shoulder Press", "Machine Shoulder Press", "Lateral Raise", "Front Raise", "Face Pulls", "Arnold Press", "Upright Row"],
     "Biceps": ["EZ Bar Curls", "Hammer Curls", "Preacher Curl", "Concentration Curl", "Dumbbell Bicep Curl", "Cable Curl"],
-    "Triceps": ["Triceps Extension", "Dips", "Triceps Rope Pushdown", "Close-Grip Bench Press", "Skullcrushers", "Overhead Dumbbell Extension"],
-    "Back": ["Lat Pull Down", "Seated Cable Row", "Face Pulls", "Barbell Row", "T-Bar Row", "Pull-ups", "Deadlifts (conventional)"],
-    "Legs": ["Leg Press", "Squat", "Leg Extension", "Calf Raise", "Hamstring Curl", "Hip Thrusts", "Romanian Deadlifts", "Lunges"],
+    "Triceps": [ "Overhead Dumbbell Extension", "Dips", "Triceps Rope Pushdown", "Skullcrushers", "JM Press"],
+    "Back": ["Lat Pull Down", "Seated Cable Row", "Machine Row", "Reverse Pec Deck", "Chest Supported T-Bar Row", "Barbell Row", "One-Arm Dumbbell Row"],
+    "Legs": ["Leg Press", "Barbbell Squat", "Hack Squat", "Lever Squat", "Leg Extension", "Calf Raise", "Hamstring Curl", "Hip Thrusts", "Romanian Deadlifts", "Lunges"],
+    "Abs": ["Plank", "Crunches", "Russian Twists", "Leg Raises", "Bicycle Crunches", "Hanging Knee Raises"],
     "Treadmill": ["Treadmill Cardio"] // Special key for cardio
 };
 
